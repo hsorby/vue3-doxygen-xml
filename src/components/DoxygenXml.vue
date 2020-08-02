@@ -61,6 +61,9 @@ export default {
       immediate: true
     }
   },
+  updated() {
+    this.$emit('updated')
+  },
   methods: {
     fetchPageData(routeTo) {
       const mainPage = routeTo.params.pageName === undefined
