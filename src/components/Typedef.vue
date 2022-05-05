@@ -1,13 +1,13 @@
 <template>
   <dl :id="data.id" class="typedef">
     <dt class="typedef-name">
-      {{ name }} 
+      {{ name }}
     </dt>
     <dt>
-      <BriefDescription :data="briefDescription" />
-      (<LinkedText :item="linkedText" :class="'typedef-linked-text'" />)
+      <brief-description :data="briefDescription" />
+      (<linked-text :item="linkedText" :class="'typedef-linked-text'" />)
     </dt>
-        <dt class="typedef-definition">
+    <dt class="typedef-definition">
       {{ processedDefinition }}
     </dt>
   </dl>
@@ -16,8 +16,8 @@
 <script>
 import { decodeHTML } from '../js/utilities'
 
-import BriefDescription from './BriefDescription'
-import LinkedText from './LinkedText'
+import BriefDescription from './BriefDescription.vue'
+import LinkedText from './LinkedText.vue'
 
 export default {
   name: 'Typedef',
