@@ -26,7 +26,7 @@
               :key="data.name + '_' + namespaceTypeDefIndex"
               class="typedef-list-item"
             >
-              <typedef :data="namespaceTypeDef" />
+              <Typedef :data="namespaceTypeDef" />
             </li>
           </ul>
         </section>
