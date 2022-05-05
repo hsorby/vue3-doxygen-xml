@@ -1,12 +1,12 @@
 {
-  "name": "vue-doxygen-xml",
-  "version": "0.1.2",
+  "name": "vue3-doxygen-xml",
+  "version": "0.1.0",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/hsorby/vue-doxygen-xml#readme",
+  "homepage": "https://github.com/hsorby/vue3-doxygen-xml#readme",
   "bugs": {
-    "url": "https://github.com/hsorby/vue-doxygen-xml/issues"
+    "url": "https://github.com/hsorby/vue3-doxygen-xml/issues"
   },
-  "description": "Vue component for Doxygen XML content.",
+  "description": "Vue 3 component for Doxygen XML content.",
   "keywords": [
     "vue",
     "doxygen",
