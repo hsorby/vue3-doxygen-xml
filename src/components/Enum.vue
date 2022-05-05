@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import BriefDescription from './BriefDescription'
+import BriefDescription from './BriefDescription.vue'
 
 export default {
   name: 'Enum',

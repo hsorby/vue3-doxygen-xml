@@ -16,8 +16,8 @@
 </template>
 
 <script>
-import DetailedDescription from './DetailedDescription'
-import LinkedText from './LinkedText'
+import DetailedDescription from './DetailedDescription.vue'
+import LinkedText from './LinkedText.vue'
 
 export default {
   name: 'PublicFunction',

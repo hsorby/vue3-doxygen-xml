@@ -8,7 +8,7 @@
 import store from '@/store'
 
 import { getPageStem } from '../router/modules/doxygen'
-import DoxygenComponent from './DoxygenComponent'
+import DoxygenComponent from './DoxygenComponent.vue'
 
 export default {
   name: 'DoxygenXml',

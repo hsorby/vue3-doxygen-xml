@@ -4,7 +4,7 @@
 
 <script>
 // @ is an alias to /src
-import DoxygenXml from '@/components/DoxygenXml'
+import DoxygenXml from '@/components/DoxygenXml.vue'
 
 export default {
   name: 'Home',

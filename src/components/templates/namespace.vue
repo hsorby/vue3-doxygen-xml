@@ -48,9 +48,9 @@
 </template>
 
 <script>
-import BriefDescription from '../BriefDescription'
-import PublicFunction from '../PublicFunction'
-import Typedef from '../Typedef'
+import BriefDescription from '../BriefDescription.vue'
+import PublicFunction from '../PublicFunction.vue'
+import Typedef from '../Typedef.vue'
 
 import { isEmptyTextElement, decodeHTML } from '../../js/utilities'
 
