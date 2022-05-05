@@ -16,8 +16,8 @@
 </template>
 
 <script>
-import DetailedDescription from '@/components/DetailedDescription'
-import LinkedText from '@/components/LinkedText'
+import DetailedDescription from './DetailedDescription'
+import LinkedText from './LinkedText'
 
 export default {
   name: 'PublicFunction',

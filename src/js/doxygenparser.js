@@ -1,4 +1,4 @@
-import { decodeHTML } from '@/js/utilities'
+import { decodeHTML } from './utilities'
 
 function splitNamespace(text) {
   return text.split('::')

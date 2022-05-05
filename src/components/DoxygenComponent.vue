@@ -26,7 +26,7 @@ export default {
     loader() {
       return () =>
         import(
-          /* webpackPrefetch: true */ `@/components/templates/${this.componentType()}`
+          /* webpackPrefetch: true */ `./templates/${this.componentType()}`
         )
     }
   },
@@ -37,8 +37,7 @@ export default {
       })
       .catch(() => {
         this.defaultComponent = true
-        this.component = () =>
-          import(/* webpackPrefetch: true */ '@/components/Default')
+        this.component = () => import(/* webpackPrefetch: true */ './Default')
       })
   },
   methods: {

@@ -1,5 +1,5 @@
-import DoxygenService from '@/services/DoxygenService'
-import { parsePage } from '@/js/doxygenparser'
+import DoxygenService from '../../services/DoxygenService'
+import { parsePage } from '../../js/doxygenparser'
 
 export const namespaced = true
 

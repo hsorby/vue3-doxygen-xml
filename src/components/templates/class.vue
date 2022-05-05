@@ -130,15 +130,15 @@
 <script>
 import { mapGetters } from 'vuex'
 
-import BriefDescription from '@/components/BriefDescription'
-import DetailedDescription from '@/components/DetailedDescription'
-import Enum from '@/components/Enum'
-import LinkedText from '@/components/LinkedText'
-import PublicFunction from '@/components/PublicFunction'
-import RouterLinkList from '@/components/RouterLinkList'
+import BriefDescription from '../BriefDescription'
+import DetailedDescription from '../DetailedDescription'
+import Enum from '../Enum'
+import LinkedText from '../LinkedText'
+import PublicFunction from '../PublicFunction'
+import RouterLinkList from '../RouterLinkList'
 
-import { removeDeletedFunctions, isEmptyTextElement } from '@/js/utilities'
-import { getPageStem } from '@/router/modules/doxygen'
+import { removeDeletedFunctions, isEmptyTextElement } from '../../js/utilities'
+import { getPageStem } from '../../router/modules/doxygen'
 
 export default {
   name: 'Class',

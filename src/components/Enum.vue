@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import BriefDescription from '@/components/BriefDescription'
+import BriefDescription from './BriefDescription'
 
 export default {
   name: 'Enum',

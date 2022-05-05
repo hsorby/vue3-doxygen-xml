@@ -20,8 +20,8 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import { decodeHTML } from '@/js/utilities'
-import { getPageStem } from '@/router/modules/doxygen'
+import { decodeHTML } from '../js/utilities'
+import { getPageStem } from '../router/modules/doxygen'
 
 export default {
   name: 'LinkedText',

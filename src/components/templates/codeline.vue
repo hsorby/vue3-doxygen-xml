@@ -1,5 +1,5 @@
 <script>
-import { doxygenChildren } from '@/mixins/DoxygenChildren'
+import { doxygenChildren } from '../../mixins/DoxygenChildren'
 
 export default {
   name: 'codeline',

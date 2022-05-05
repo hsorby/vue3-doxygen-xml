@@ -1,20 +1,23 @@
 <template>
   <dl :id="data.id" class="typedef">
-    <dt>
-      {{ processedDefinition }}
+    <dt class="typedef-name">
+      {{ name }} 
     </dt>
     <dt>
-      <brief-description :data="briefDescription" />(
-      <linked-text :item="linkedText" />)
+      <BriefDescription :data="briefDescription" />
+      (<LinkedText :item="linkedText" :class="'typedef-linked-text'" />)
+    </dt>
+        <dt class="typedef-definition">
+      {{ processedDefinition }}
     </dt>
   </dl>
 </template>
 
 <script>
-import { decodeHTML } from '@/js/utilities'
+import { decodeHTML } from '../js/utilities'
 
-import BriefDescription from '@/components/BriefDescription'
-import LinkedText from '@/components/LinkedText'
+import BriefDescription from './BriefDescription'
+import LinkedText from './LinkedText'
 
 export default {
   name: 'Typedef',
@@ -27,6 +30,9 @@ export default {
   computed: {
     processedDefinition() {
       return decodeHTML(this.data.definition)
+    },
+    name() {
+      return this.data.name
     },
     briefDescription() {
       return { element: this.data.brief }
