@@ -6,13 +6,13 @@
       :key="'namespace_' + namespaceIndex"
       :id="'namespace_' + namespaceIndex"
     >
-      <h2>
+      <h2 v-if="namespace.classes.length">
         Namespace:
         <router-link :to="{ path: `${basePath}/${namespace.refId}` }">{{
           namespace.name
         }}</router-link>
       </h2>
-      <ul class="namespace-group">
+      <ul class="namespace-group" v-if="namespace.classes.length">
         <li class="namespace-group-item">Classes</li>
         <ul class="class-list">
           <li
