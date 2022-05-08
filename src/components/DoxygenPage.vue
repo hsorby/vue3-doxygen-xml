@@ -21,7 +21,7 @@ import { getPageStem } from '../router/modules/doxygen'
 
 const props = defineProps({
   baseURL: String,
-  scrollDelay: Number
+  scrollDelay: Number,
 })
 
 const { baseURL, scrollDelay } = toRefs(props)
