@@ -1,7 +1,7 @@
 import DoxygenXml from './components/DoxygenXml.vue'
 import * as DoxygenStore from './store/modules/doxygen'
 
-console.log('===== this is a local vue-doxygen-xml =====')
+console.log('===== this is a local vue3-doxygen-xml =====')
 // Import template components so they are part of the bundle and don't
 // require retrieving separately.
 import class_ from './components/templates/class.vue'

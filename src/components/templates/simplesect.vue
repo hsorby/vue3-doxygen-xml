@@ -1,5 +1,6 @@
 <script>
 import { doxygenChildren } from '../../mixins/DoxygenChildren'
+import { h } from 'vue';
 
 export default {
   name: 'simplesect',
@@ -19,7 +20,7 @@ export default {
     }
   },
   // Override the mixin render function
-  render(h) {
+  render() {
     return h(
       'dl', // tag name
       [

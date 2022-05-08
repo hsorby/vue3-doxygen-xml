@@ -1,4 +1,5 @@
 import { parseLinkedTextType } from '../js/doxygenparser'
+import { h } from 'vue';
 
 const childLinkedText = node => {
   const item = parseLinkedTextType(node)
@@ -29,16 +30,16 @@ const childDoxygenComponent = node => {
 export const doxygenChildren = {
   components: {
     DoxygenComponent: () =>
-      import(/* webpackPrefetch: true */ '../components/DoxygenComponent'),
+      import(/* webpackPrefetch: true */ '../components/DoxygenComponent.vue'),
     LinkedText: () =>
-      import(/* webpackPrefetch: true */ '../components/LinkedText')
+      import(/* webpackPrefetch: true */ '../components/LinkedText.vue')
   },
   props: {
     data: {
       type: Object
     }
   },
-  render(h) {
+  render() {
     return h(
       this.tagName, // tag name
       {

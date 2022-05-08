@@ -8,7 +8,7 @@
       <router-link
         :to="{
           path: derivedLink.path,
-          hash: derivedLink.hash
+          hash: derivedLink.hash,
           // params: item.link.params,
         }"
         >{{ decodedText }}</router-link
@@ -27,18 +27,18 @@ export default {
   name: 'LinkedText',
   props: {
     item: {
-      type: Object
+      type: Object,
     },
     link: {
-      type: Object
-    }
+      type: Object,
+    },
   },
-  data: function() {
+  data: function () {
     return {
-      derivedLink: { path: undefined, hash: undefined }
+      derivedLink: { path: '', hash: '' },
     }
   },
-  mounted: function() {
+  mounted: function () {
     if (this.link) {
       this.derivedLink = this.link
     }
@@ -46,12 +46,17 @@ export default {
       return
     }
     if (this.item.reference.refKind === 'member') {
-      this.derivedLink.hash = this.item.reference.refId
+      let hashRef = this.item.reference.refId
+      if (!hashRef.startsWith('#')) {
+        hashRef = '#' + hashRef
+      }
+      this.derivedLink.hash = hashRef
       this.derivedLink.path = this.getPageIdForReferenceId(
         getPageStem(this.$route),
         this.derivedLink.hash
       )
       if (this.derivedLink.path === undefined) {
+        this.derivedLink.path = ''
         this.fetchPageBasedOnReferenceId(this.item.reference.refId, 1)
       }
     } else if (this.item.reference.refKind === 'compound') {
@@ -72,9 +77,9 @@ export default {
         this.fetchPage({
           page_name: potentialPageName,
           page_stem: getPageStem(this.$route),
-          page_url: baseURL
+          page_url: baseURL,
         })
-          .then(response => {
+          .then((response) => {
             this.derivedLink.path = response.id
           })
           .catch(() => {
@@ -84,12 +89,12 @@ export default {
         throw `Could not determine the page that reference '${referenceId}' came from.`
       }
     },
-    ...mapActions('doxygen', ['fetchPage'])
+    ...mapActions('doxygen', ['fetchPage']),
   },
   computed: {
     ...mapGetters({
       getPageIdForReferenceId: 'doxygen/getPageIdForReferenceId',
-      getBaseUrl: 'doxygen/getBaseUrl'
+      getBaseUrl: 'doxygen/getBaseUrl',
     }),
     decodedText() {
       if (this.item.reference !== null) {
@@ -104,8 +109,8 @@ export default {
     postDecodedText() {
       const postText = this.item.text.split(this.item.linkedText)[1]
       return decodeHTML(postText)
-    }
-  }
+    },
+  },
 }
 </script>
 

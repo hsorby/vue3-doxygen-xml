@@ -1,7 +1,7 @@
 <template>
   <div>
-    <template v-for="link in links.slice(0, lastIndex)">
-      <router-link :to="link.refId" :key="link.refId">{{
+    <template v-for="link in links.slice(0, lastIndex)" :key="link.refId">
+      <router-link :to="link.refId">{{
         link.name
       }}</router-link>
       <span v-if="linkCount > 2" :key="'span_' + link.refId">, </span>

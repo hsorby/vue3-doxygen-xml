@@ -1,5 +1,6 @@
 <script>
-import { doxygenChildren } from '../../mixins/DoxygenChildren.vue'
+import { doxygenChildren } from '../../mixins/DoxygenChildren.js'
+import { h } from 'vue';
 
 export default {
   name: 'computeroutput',
@@ -10,7 +11,7 @@ export default {
     }
   },
   // Override the mixin render function
-  render(h) {
+  render() {
     return h(
       'code', // tag name
       [

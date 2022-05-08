@@ -1,13 +1,9 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
+import { createStore } from 'vuex'
 
 import * as doxygen from './modules/doxygen.js'
 
-Vue.use(Vuex)
-
-export default new Vuex.Store({
-  state: {},
-  mutations: {},
-  actions: {},
-  modules: { doxygen }
+const store = createStore({
+  modules: { doxygen },
 })
+
+export default store

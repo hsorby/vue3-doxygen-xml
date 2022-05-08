@@ -1,10 +1,10 @@
-export const decodeHTML = encoded => {
+export const decodeHTML = (encoded) => {
   let elem = document.createElement('textarea')
   elem.innerHTML = encoded
   return elem.value
 }
 
-export const removeDeletedFunctions = functions => {
+export const removeDeletedFunctions = (functions) => {
   let refIds = []
   let i = functions.length
   while (i--) {
@@ -17,13 +17,13 @@ export const removeDeletedFunctions = functions => {
   return refIds
 }
 
-export const isEmptyTextElement = node => {
+export const isEmptyTextElement = (node) => {
   let is = true
-  node.children.forEach(child => {
+  for (const child of node.children) {
     if (child.nodeType !== 3) {
       is = false
     }
-  })
+  }
   if (is && !!node.textContent.trim()) {
     is = false
   }

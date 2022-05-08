@@ -4,8 +4,8 @@
       <linked-text :item="data.returnType" />
       <code class="sig-name"> {{ data.name }}</code
       >(
-      <template v-for="(param, index) in data.params">
-        <span :key="data.name + '_' + index">
+      <template v-for="(param, index) in data.params" :key="data.name + '_' + index">
+        <span>
           <linked-text :item="param.paramType" /> <em>{{ param.name }}</em>
           <template v-if="index < data.params.length - 1">, </template>
         </span> </template

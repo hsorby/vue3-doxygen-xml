@@ -1,5 +1,5 @@
 <script>
-import { doxygenChildren } from '../../mixins/DoxygenChildren.vue'
+import { doxygenChildren } from '../../mixins/DoxygenChildren.js'
 
 export default {
   name: 'sp',
