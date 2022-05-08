@@ -42,6 +42,18 @@
             </li>
           </ul>
         </section>
+        <section :id="data.id + '_enums'" v-if="haveEnums">
+          <li class="namespace-group-item"><h2>Enumerations</h2></li>
+          <ul class="namespace-enumeration-list">
+            <li
+              v-for="(namespaceEnum, namespaceEnumsIndex) in enums"
+              :key="data.name + '_' + namespaceEnumsIndex"
+              class="namespace-enumeration-list-item"
+            >
+              <enum :data="namespaceEnum" />
+            </li>
+          </ul>
+        </section>
       </ul>
     </section>
   </div>
@@ -51,12 +63,13 @@
 import BriefDescription from '../BriefDescription.vue'
 import PublicFunction from '../PublicFunction.vue'
 import Typedef from '../Typedef.vue'
+import Enum from '../Enum.vue'
 
 import { isEmptyTextElement, decodeHTML } from '../../js/utilities'
 
 export default {
   name: 'Namespace',
-  components: { BriefDescription, PublicFunction, Typedef },
+  components: { BriefDescription, Enum, PublicFunction, Typedef },
   props: {
     data: {
       type: Object,
@@ -83,6 +96,12 @@ export default {
     },
     functions() {
       return this.getSection('func')
+    },
+    haveEnums() {
+      return this.haveSection('enum')
+    },
+    enums() {
+      return this.getSection('enum')
     }
   },
   methods: {
