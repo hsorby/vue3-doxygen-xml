@@ -1,16 +1,16 @@
 ![logo](https://github.com/hsorby/vue-doxygen-xml/raw/main/docs/assetts/vue-doxygen-xml-logo.png)
 
-# vue-doxygen-xml
+# vue3-doxygen-xml
 
-[![npm](https://img.shields.io/npm/v/vue-doxygen-xml.svg) ![npm](https://img.shields.io/npm/dm/vue-doxygen-xml.svg)](https://www.npmjs.com/package/vue-doxygen-xml)
-[![vue2](https://img.shields.io/badge/vue-2.x-brightgreen.svg)](https://vuejs.org/)
+[![npm](https://img.shields.io/npm/v/vue3-doxygen-xml.svg) ![npm](https://img.shields.io/npm/dm/vue3-doxygen-xml.svg)](https://www.npmjs.com/package/vue3-doxygen-xml)
+[![vue3](https://img.shields.io/badge/vue-3.x-brightgreen.svg)](https://vuejs.org/)
 
 Vue component for displaying Doxygen XML content.
 
 ## Project setup
 
 ```
-npm install --save vue-doxygen-xml
+npm install --save vue3-doxygen-xml
 ```
 
 ### Module import
@@ -21,7 +21,7 @@ vue-doxygen-xml makes use of the vuex store to track data. You must use a vuex s
 ```javascript
 import Vue from 'vue'
 import store from './store'
-import DoxygenXml from 'vue-doxygen-xml'
+import DoxygenXml from 'vue3-doxygen-xml'
 
 Vue.use(DoxygenXml, { store })
 ```
@@ -41,7 +41,7 @@ Example view `Help.vue`:
 </template>
 
 <script>
-import { DoxygenXml } from 'vue-doxygen-xml'
+import { DoxygenXml } from 'vue3-doxygen-xml'
 
 export default {
   name: 'Help',
@@ -71,7 +71,7 @@ Again assuming standard layout.
 
 ## Examples
 
-For a complete example of a Vue application using vue-doxygen-xml look at https://github.com/hsorby/example-vue-doxygen-xml.
+For a complete example of a Vue application using vue-doxygen-xml look at https://github.com/hsorby/example-vue3-doxygen-xml.
 The **main** branch has a basic example of how vue-doxygen-xml may be used and the **multi_version** branch has an example of how vue-doxygen-xml may be used for different versions of Doxygen XML output.
 
 ---
