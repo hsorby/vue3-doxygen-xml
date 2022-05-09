@@ -22,7 +22,7 @@
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint",
-    "build-package": "vue-cli-service build --target lib --name vue-doxygen-xml ./src/index.js"
+    "build-package": "vue-cli-service build --target lib --name vue3-doxygen-xml ./src/index.js"
   },
   "dependencies": {
     "axios": "^0.21.1",
