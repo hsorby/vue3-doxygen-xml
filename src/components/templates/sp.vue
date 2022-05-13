@@ -1,19 +1,7 @@
-<script>
-import { doxygenChildren } from '../../mixins/DoxygenChildren.js'
+<template>&nbsp;</template>
 
-export default {
-  name: 'sp',
-  mixins: [doxygenChildren],
-  props: {
-    data: {
-      type: Object
-    }
-  },
-  // Override the mixin render function
-  render() {
-    return this._v(' ')
-  }
-}
+<script setup>
+const props = defineProps({
+  element: undefined,
+})
 </script>
-
-<style scoped></style>

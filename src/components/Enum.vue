@@ -1,7 +1,7 @@
 <template>
   <div :id="data.id" class="enum">
     <h3>enum {{ data.name }}</h3>
-    <brief-description :data="briefDescription" />
+    <brief-description :element="briefDescriptionElement" />
     <table>
       <tr>
         <th>Constant</th>
@@ -13,30 +13,26 @@
         :id="enumValue.id"
       >
         <td>{{ enumValue.name }}</td>
-        <td><brief-description :data="{ element: enumValue.brief }" /></td>
+        <td><brief-description :element="enumValue.brief" /></td>
       </tr>
     </table>
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, toRefs } from 'vue'
+
 import BriefDescription from './BriefDescription.vue'
 
-export default {
-  name: 'Enum',
-  components: { BriefDescription },
-  props: {
-    data: {
-      type: Object
-    }
-  },
-  computed: {
-    briefDescription() {
-      return { element: this.data.brief }
-    },
-    linkedText() {
-      return this.data.enumType
-    }
-  }
-}
+import { defaultBriefDescription } from '../js/utilities'
+
+const props = defineProps({
+  data: Object,
+})
+
+const { data } = toRefs(props)
+
+const briefDescriptionElement = computed(() => {
+  return defaultBriefDescription(data.value.brief)
+})
 </script>

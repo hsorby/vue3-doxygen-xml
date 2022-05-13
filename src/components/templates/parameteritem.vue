@@ -1,20 +1,12 @@
-<script>
-import { doxygenChildren } from '../../mixins/DoxygenChildren.js'
+<template>
+  <simple-tag tag="li" :element="element"></simple-tag>
+</template>
 
-export default {
-  name: 'parameteritem',
-  mixins: [doxygenChildren],
-  props: {
-    data: {
-      type: Object
-    }
-  },
-  data() {
-    return {
-      tagName: 'li'
-    }
-  }
-}
+<script setup>
+import SimpleTag from '../SimpleTag.vue'
+
+const props = defineProps({
+  element: undefined,
+})
 </script>
 
-<style scoped></style>

@@ -14,17 +14,6 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Loading',
-  props: {
-    name: {
-      type: String
-    }
-  }
-}
-</script>
-
 <style scoped>
 .loading-container {
   display: flex;

@@ -11,51 +11,30 @@
         </span> </template
       >) {{ postArgs }}
     </dt>
-    <detailed-description :data="detailedDescription" />
+    <detailed-description :element="data.detailed" />
   </dl>
 </template>
 
-<script>
+<script setup>
+import { computed, toRefs } from 'vue'
+
 import DetailedDescription from './DetailedDescription.vue'
 import LinkedText from './LinkedText.vue'
 
-export default {
-  name: 'PublicFunction',
-  components: { LinkedText, DetailedDescription },
-  props: {
-    data: {
-      type: Object
-    }
-  },
-  computed: {
-    postArgs() {
-      let postArgs = ''
-      if (this.data.argsString.includes(')')) {
-        const splitArgsString = this.data.argsString.split(')')
-        postArgs = splitArgsString[splitArgsString.length - 1]
+const props = defineProps({
+  data: Object,
+})
+
+const { data } = toRefs(props)
+
+const postArgs = computed(() => {
+      let args = ''
+      if (data.value.argsString.includes(')')) {
+        const splitArgsString = data.value.argsString.split(')')
+        args = splitArgsString[splitArgsString.length - 1]
       }
-      return postArgs
-    },
-    detailedDescription() {
-      return { element: this.data.detailed }
-    }
-  }
-}
+      return args
+})
+
 </script>
 
-<style scoped>
-/*
-dl.function {
-  margin-top: 15px;
-  margin-bottom: 3px;
-}
-dl.function > dt {
-  font-size: larger;
-  border-radius: 25px;
-  background-color: #eeeeee;
-}
-dl.function > dt > span:first-child {
-  margin-left: 11px;
-}
-*/
-</style>

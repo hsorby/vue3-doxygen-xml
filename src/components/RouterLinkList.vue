@@ -15,23 +15,19 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'RouterLinkList',
-  props: {
-    links: {
-      type: Array
-    }
-  },
-  computed: {
-    linkCount() {
-      return this.links.length
-    },
-    lastIndex() {
-      return this.links.length - 1
-    }
-  }
-}
-</script>
+<script setup>
+import { computed, toRefs } from 'vue'
 
-<style scoped></style>
+const props = defineProps({
+  links: Array,
+})
+
+const { links } = toRefs(props)
+
+const linkCount = computed(() => {
+  return links.value.length
+})
+const lastIndex = computed(() => {
+  return links.value.length - 1
+})
+</script>

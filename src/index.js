@@ -4,16 +4,15 @@ import * as DoxygenStore from './store/modules/doxygen'
 console.log('===== this is a local vue3-doxygen-xml =====')
 // Import template components so they are part of the bundle and don't
 // require retrieving separately.
-import class_ from './components/templates/class.vue'
+import class_ from './components/Class.vue'
 import codeline from './components/templates/codeline.vue'
 import computeroutput from './components/templates/computeroutput.vue'
 import emphasis from './components/templates/emphasis.vue'
 import highlight from './components/templates/highlight.vue'
-import index from './components/templates/index.vue'
+import index from './components/Index.vue'
 import itemizedlist from './components/templates/itemizedlist.vue'
 import listitem from './components/templates/listitem.vue'
-import loading from './components/templates/loading.vue'
-import namespace from './components/templates/namespace.vue'
+import namespace from './components/Namespace.vue'
 import para from './components/templates/para.vue'
 import parameterdescription from './components/templates/parameterdescription.vue'
 import parameteritem from './components/templates/parameteritem.vue'
@@ -24,9 +23,9 @@ import programlisting from './components/templates/programlisting.vue'
 import simplesect from './components/templates/simplesect.vue'
 import sp from './components/templates/sp.vue'
 
-import Default from './components/Default.vue'
+import Error from './components/Error.vue'
 
-function install(Vue, options = {}) {
+function install(app, options = {}) {
   if (!options.store) {
     throw 'Please provide a store!!'
   }
@@ -45,7 +44,6 @@ if (
   index ||
   itemizedlist ||
   listitem ||
-  loading ||
   namespace ||
   para ||
   parameterdescription ||
@@ -56,7 +54,7 @@ if (
   programlisting ||
   simplesect ||
   sp ||
-  Default
+  Error
 ) {
   // Are these things hidden?
 }

@@ -1,21 +1,14 @@
 <template>
-  <component :is="state.component" :data="state.data" :name="state.name" />
+  <component :is="asyncComponent" :data="pageData" :name="pageName" />
 </template>
 
 <script setup>
-import {
-  defineAsyncComponent,
-  defineProps,
-  onUpdated,
-  shallowReactive,
-  toRefs,
-  watchEffect,
-} from 'vue'
-import { useRouter } from 'vue-router'
+import { defineAsyncComponent, defineProps, ref, toRefs, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
 import LoadingComponent from './Loading.vue'
-import ErrorComponent from './Default.vue'
+import ErrorComponent from './Error.vue'
 
 import { getPageStem } from '../router/modules/doxygen'
 
@@ -26,92 +19,40 @@ const props = defineProps({
 
 const { baseURL, scrollDelay } = toRefs(props)
 const store = useStore()
-const router = useRouter()
+const route = useRoute()
 
-let previousRoute = {
-  path: undefined,
+const asyncComponent = ref(null)
+const pageName = ref('')
+const pageData = ref({})
+
+const from = {
   hash: undefined,
+  path: undefined,
 }
 
-const state = shallowReactive({
-  component: undefined,
-  name: '<not-set>',
-  data: {},
-})
-
-onUpdated(() => {
-  const to = router.currentRoute.value
-  setTimeout(() => {
-    const hash = to.hash.slice(1)
-    const elem = document.getElementById(hash)
-    if (elem) {
-      previousRoute.hash = hash
-      window.scrollTo({
-        top: elem.offsetTop,
-        behavior: 'smooth',
-      })
-    }
-  }, scrollDelay.value)
-})
-watchEffect(() => {
-  const to = router.currentRoute.value
-  const pageURL = baseURL.value
-  const currentHash = to.hash ? to.hash.slice(1) : ''
-  const currentPath = to.path.replace(to.hash, '')
-
-  if (
-    currentPath === previousRoute.path &&
-    currentHash &&
-    previousRoute.hash !== undefined &&
-    previousRoute.hash !== currentHash
-  ) {
-    const elem = document.getElementById(currentHash)
-    window.scrollTo({
-      top: elem.offsetTop,
-      behavior: 'smooth',
-    })
-    previousRoute.hash = currentHash
-    return
-  }
-  previousRoute.hash = currentHash
-  previousRoute.path = currentPath
-
-  let pageName = to.params.pageName
-  if (pageName) {
-    if (pageName.startsWith('class')) {
-      state.name = 'class'
-    } else if (pageName.startsWith('namespace')) {
-      state.name = 'namespace'
-    } else {
-      throw `Have not yet learnt how to deal with ${pageName} files.`
-    }
-  } else {
-    state.name = 'index'
-    pageName = 'index'
-  }
-
-  const pageStem = getPageStem(to)
-  state.component = defineAsyncComponent({
+function loadPage(pageStem, pageName, templateName) {
+  asyncComponent.value = defineAsyncComponent({
     loader: () => {
+      pageName = pageName ? pageName : 'index'
       return store
         .dispatch('doxygen/fetchPage', {
           page_name: pageName,
           page_stem: pageStem,
-          page_url: pageURL,
+          page_url: baseURL.value,
         })
-        .then((pageData) => {
-          state.data = pageData
+        .then((response) => {
+          pageData.value = response
           if (pageName === 'index') {
-            return import(`./templates/${state.name}.vue`)
+            return import(`./${templateName}.vue`)
           } else {
             return store
               .dispatch('doxygen/fetchDependeePages', {
                 page_name: pageName,
                 page_stem: pageStem,
-                page_url: pageURL,
+                page_url: baseURL.value,
               })
               .then(() => {
-                return import(`./templates/${state.name}.vue`)
+                return import(`./${templateName}.vue`)
               })
           }
         })
@@ -121,5 +62,60 @@ watchEffect(() => {
     // A component to use if the load fails
     errorComponent: ErrorComponent,
   })
-})
+}
+function determineTemplateName(pageName) {
+  let templateName = 'Index'
+  if (pageName) {
+    if (pageName.startsWith('class')) {
+      templateName = 'Class'
+    } else if (pageName.startsWith('namespace')) {
+      templateName = 'Namespace'
+    } else {
+      throw `Have not yet learnt how to deal with ${pageName} files.`
+    }
+  }
+
+  return templateName
+}
+function scrollTo(hash) {
+  const elem = document.getElementById(hash)
+  if (elem) {
+    window.scrollTo({
+      top: elem.offsetTop,
+      behavior: 'smooth',
+    })
+  }
+}
+function handleRouteChange(to) {
+  const toHash = to.hash ? to.hash.slice(1) : ''
+  const toPath = to.path.replace(to.hash, '')
+  if (toPath !== from.path && toHash) {
+    setTimeout(() => {
+      scrollTo(toHash)
+    }, scrollDelay.value)
+  } else if (toPath === from.path && toHash !== from.hash) {
+    scrollTo(toHash)
+  }
+
+  const samePage = toPath === from.path
+  // Store this route as the previous route.
+  from.hash = toHash
+  from.path = toPath
+  return samePage
+}
+watch(
+  route,
+  (to) => {
+    const current = handleRouteChange(to)
+
+    if (!current) {
+      const pageStem = getPageStem(to)
+      let pageName = to.params.pageName
+
+      const templateName = determineTemplateName(pageName)
+      loadPage(pageStem, pageName, templateName)
+    }
+  },
+  { immediate: true }
+)
 </script>

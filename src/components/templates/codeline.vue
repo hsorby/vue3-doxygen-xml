@@ -1,20 +1,11 @@
-<script>
-import { doxygenChildren } from '../../mixins/DoxygenChildren.js'
+<template>
+  <simple-tag tag="span" :element="element"></simple-tag>
+</template>
 
-export default {
-  name: 'codeline',
-  mixins: [doxygenChildren],
-  props: {
-    data: {
-      type: Object
-    }
-  },
-  data() {
-    return {
-      tagName: 'span'
-    }
-  }
-}
+<script setup>
+import SimpleTag from '../SimpleTag.vue'
+
+const props = defineProps({
+  element: undefined,
+})
 </script>
-
-<style scoped></style>

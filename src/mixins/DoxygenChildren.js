@@ -49,7 +49,7 @@ export const doxygenChildren = {
         if (typeof child === 'string') {
           return child
         }
-        return h(child[0], child[1])
+        return h(child[0], child[1].props)
       }) // array of children
     )
   },
@@ -70,6 +70,7 @@ export const doxygenChildren = {
         }
         childElements.push(childElement)
       })
+
       return childElements
     }
   }

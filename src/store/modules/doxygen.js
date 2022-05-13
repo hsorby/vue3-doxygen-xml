@@ -40,7 +40,7 @@ export const mutations = {
 }
 
 export const actions = {
-  fetchPage({ dispatch, commit, getters }, payload) {
+  fetchPage({ commit, getters }, payload) {
     const page_name = payload.page_name
     const page_stem = payload.page_stem
     const base_url = payload.page_url

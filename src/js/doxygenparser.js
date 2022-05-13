@@ -111,7 +111,7 @@ function parseRefTextType(element) {
 }
 
 export function parseLinkedTextType(element) {
-  let text = element.textContent
+  const text = element.textContent
   let linkedText = ''
   let reference = null
   const refElement = element.querySelector('ref')

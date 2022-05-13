@@ -29,3 +29,12 @@ export const isEmptyTextElement = (node) => {
   }
   return is
 }
+
+export const defaultBriefDescription = (briefIn) => {
+  let brief = briefIn
+  if (isEmptyTextElement(brief)) {
+    brief = document.createElement('P')
+    brief.innerHTML = 'Brief description is missing.'
+  }
+  return brief
+}
