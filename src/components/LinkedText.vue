@@ -56,15 +56,16 @@ onMounted(() => {
     return
   }
   if (derivedItem.value.reference.refKind === 'member') {
+    derivedLink.value.path = store.getters['doxygen/getPageIdForReferenceId'](
+      pageStem.value,
+      derivedItem.value.reference.refId
+    )
     let hashRef = derivedItem.value.reference.refId
     if (!hashRef.startsWith('#')) {
       hashRef = '#' + hashRef
     }
     derivedLink.value.hash = hashRef
-    derivedLink.value.path = store.getters['doxygen/getPageIdForReferenceId'](
-      pageStem.value,
-      derivedLink.value.hash
-    )
+
     if (derivedLink.value.path === undefined) {
       derivedLink.value.path = ''
       fetchPageBasedOnReferenceId(derivedItem.value.reference.refId, 1)
@@ -90,7 +91,7 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
         page_url: baseURL,
       })
       .then((response) => {
-        derivedLink.path = response.id
+        derivedLink.value.path = response.id
       })
       .catch(() => {
         fetchPageBasedOnReferenceId(referenceId, attempt + 1)
@@ -120,7 +121,4 @@ const postDecodedText = computed(() => {
   const postText = derivedItem.value.text.split(derivedItem.value.linkedText)[1]
   return decodeHTML(postText)
 })
-
 </script>
-
-<style scoped></style>

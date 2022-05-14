@@ -53,14 +53,17 @@ export const actions = {
       return getters.getInflight(page_stem, page_name)
     }
     const pending = DoxygenService.getPage(base_url, page_name)
-      .then((response) => {
-        const page = parsePage(page_name, response.data)
-        commit('APPEND_PAGE', { routeURL: page_stem, page })
-        commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
-        return page
-      }, () => {
-        commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
-      })
+      .then(
+        (response) => {
+          const page = parsePage(page_name, response.data)
+          commit('APPEND_PAGE', { routeURL: page_stem, page })
+          commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
+          return page
+        },
+        () => {
+          commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
+        }
+      )
       .catch((error) => {
         commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
         // throw error
@@ -132,6 +135,12 @@ export const getters = {
   },
   getBaseUrl: (state) => (routeURL) => {
     return state.urlMap.get(routeURL)
+  },
+  hasPageForReferenceId: (state) => (routeURL, reference) => {
+    const candidatePage = state.pages
+      .get(routeURL)
+      .find((page) => reference.startsWith(page.id))
+    return candidatePage != undefined
   },
   getPageIdForReferenceId: (state) => (routeURL, reference) => {
     const candidatePage = state.pages
