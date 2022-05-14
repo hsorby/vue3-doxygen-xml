@@ -2,6 +2,6 @@
 
 <script setup>
 const props = defineProps({
-  element: undefined,
+  properties: undefined,
 })
 </script>

@@ -15,7 +15,6 @@ const props = defineProps({
   data: Object,
   name: String,
 })
-
 const { children } = useChildren(data)
 
 </script>
