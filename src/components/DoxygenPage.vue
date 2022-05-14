@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, defineProps, ref, toRefs, watch } from 'vue'
+import { defineAsyncComponent, defineProps, ref, shallowRef, toRefs, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
@@ -21,7 +21,7 @@ const { baseURL, scrollDelay } = toRefs(props)
 const store = useStore()
 const route = useRoute()
 
-const asyncComponent = ref(null)
+const asyncComponent = shallowRef(null)
 const pageName = ref('')
 const pageData = ref({})
 
