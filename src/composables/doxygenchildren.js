@@ -8,9 +8,10 @@ import computeroutput from '../components/templates/computeroutput.vue'
 import parameterlist from '../components/templates/parameterlist.vue'
 import simplesect from '../components/templates/simplesect.vue'
 import sp from '../components/templates/sp.vue'
-import text from '../components/templates/text.vue'
+import plaintext from '../components/templates/plaintext.vue'
 
 const nodeNameTagNameMap = new Map([
+  ['bold', 'strong'],
   ['codeline', 'span'],
   ['emphasis', 'em'],
   ['highlight', 'mark'],
@@ -38,7 +39,7 @@ export function useChildren(element) {
       let childComponent = undefined
       if (node.nodeName === '#text') {
         childComponent = {
-          component: text,
+          component: plaintext,
           properties: { text: node.nodeValue },
         }
       } else if (nodeNameTagNameMap.has(node.nodeName)) {
