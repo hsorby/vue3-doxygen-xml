@@ -78,7 +78,16 @@ onMounted(() => {
   }
 })
 function fetchPageBasedOnReferenceId(referenceId, attempt) {
-  const splitReferenceId = referenceId.split('_')
+  // We will replace '_1_1' which we will interpret as '::' before we split
+  // and then replace it after the fact.
+  const doubleColonText = '<tmp-double-colon>'
+  const encodedDoubleColon = '_1_1'
+  const modifiedReferenceId = referenceId.replace(encodedDoubleColon, doubleColonText)
+  const splitModifiedReferenceId = modifiedReferenceId.split('_')
+  let splitReferenceId = []
+  for (const entry of splitModifiedReferenceId) {
+    splitReferenceId.push(entry.replace(doubleColonText, encodedDoubleColon))
+  }
   if (attempt < splitReferenceId.length) {
     // We are given a reference id so this won't match a page name which we need.
     // So we will split on '_' and then start to stitch a page name together.
