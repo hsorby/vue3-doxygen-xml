@@ -6,19 +6,20 @@ import path from 'path'
 export default defineConfig({
   plugins: [vue()],
   // Make sure we can do @/components/xxx style imports
-  alias: [
-    {
-      find: '@',
-      replacement: path.resolve(__dirname, 'src'),
-    },
-  ],
-  // Enable library mode: only create ES builds
+  resolve: {
+    alias: [
+      {
+        find: '@',
+        replacement: path.resolve(__dirname, 'src'),
+      },
+    ],
+  },
+  // Enable library mode: only create ES and CJS builds
   build: {
     sourcemap: true,
     lib: {
-      entry: path.resolve(__dirname, 'src/index.js'),
-      name: 'vue3-doxygen-xml',
-      formats: ['es'],
+      entry: path.resolve(__dirname, 'src/entry.js'),
+      formats: ['es', 'cjs'],
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
