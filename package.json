@@ -24,11 +24,7 @@
     "dist"
   ],
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vite build",
-    "test:unit": "vue-cli-service test:unit",
-    "lint": "vue-cli-service lint",
-    "build-package": "rollup --config rollup.config.js"
+    "build-package": "vite build"
   },
   "dependencies": {
     "axios": "^0.21.1",
