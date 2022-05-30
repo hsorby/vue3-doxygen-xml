@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import Error from '../components/Error.vue'
+import Error from '../components/ErrorComponent.vue'
 import LinkedText from '../components/LinkedText.vue'
 import SimpleTag from '../components/SimpleTag.vue'
 

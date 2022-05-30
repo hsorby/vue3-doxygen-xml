@@ -14,6 +14,8 @@
   </div>
 </template>
 
+<script setup></script>
+
 <style scoped>
 .loading-container {
   display: flex;

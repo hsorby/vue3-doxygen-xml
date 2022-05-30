@@ -3,8 +3,6 @@
 </template>
 
 <script setup>
-import { defineProps } from 'vue'
-
 import DoxygenPage from './DoxygenPage.vue'
 
 const props = defineProps({

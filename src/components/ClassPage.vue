@@ -61,7 +61,7 @@
           v-for="publicType in data.publicTypes"
           :key="`public_enum_${publicType.id}`"
         >
-          <enum v-if="publicType.kind === 'enum'" :data="publicType" />
+          <enum-section v-if="publicType.kind === 'enum'" :data="publicType" />
         </section>
       </template>
       <template v-if="data.publicFunctions.length">
@@ -134,7 +134,7 @@ import { useRoute } from 'vue-router'
 
 import BriefDescription from './BriefDescription.vue'
 import DetailedDescription from './DetailedDescription.vue'
-import Enum from './Enum.vue'
+import EnumSection from './EnumSection.vue'
 import LinkedText from './LinkedText.vue'
 import PublicFunction from './PublicFunction.vue'
 import RouterLinkList from './RouterLinkList.vue'

@@ -1,14 +1,15 @@
 <template>
-  <component :is="asyncComponent" :data="pageData" :name="pageName" />
+  <component :is="asyncComponent" :data="pageData" :name="basePageName" />
 </template>
 
 <script setup>
-import { defineAsyncComponent, defineProps, ref, shallowRef, toRefs, watch } from 'vue'
+
+import { defineAsyncComponent, ref, shallowRef, toRefs, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
-import LoadingComponent from './Loading.vue'
-import ErrorComponent from './Error.vue'
+import LoadingComponent from './LoadingComponent.vue'
+import ErrorComponent from './ErrorComponent.vue'
 
 import { getPageStem } from '../router/modules/doxygen'
 
@@ -22,7 +23,7 @@ const store = useStore()
 const route = useRoute()
 
 const asyncComponent = shallowRef(null)
-const pageName = ref('')
+const basePageName = ref('-undefined-')
 const pageData = ref({})
 
 const from = {
@@ -30,10 +31,21 @@ const from = {
   path: undefined,
 }
 
+function importComponent(templateName) {
+  switch(templateName) {
+    case 'Index':
+      return import('./IndexPage.vue')
+    case 'Class':
+      return import('./ClassPage.vue')
+    case 'Namespace':
+      return import('./NamespacePage.vue')
+  }
+}
 function loadPage(pageStem, pageName, templateName) {
   asyncComponent.value = defineAsyncComponent({
     loader: () => {
       pageName = pageName ? pageName : 'index'
+      basePageName.value = pageName
       return store
         .dispatch('doxygen/fetchPage', {
           page_name: pageName,
@@ -43,7 +55,7 @@ function loadPage(pageStem, pageName, templateName) {
         .then((response) => {
           pageData.value = response
           if (pageName === 'index') {
-            return import(`./${templateName}.vue`)
+            return importComponent(templateName)
           } else {
             return store
               .dispatch('doxygen/fetchDependeePages', {
@@ -52,7 +64,7 @@ function loadPage(pageStem, pageName, templateName) {
                 page_url: baseURL.value,
               })
               .then(() => {
-                return import(`./${templateName}.vue`)
+                return importComponent(templateName)
               })
           }
         })

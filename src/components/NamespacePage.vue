@@ -25,7 +25,7 @@
             :key="data.name + '_' + namespaceTypeDefIndex"
             class="typedef-list-item"
           >
-            <typedef :data="namespaceTypeDef" />
+            <typedef-section :data="namespaceTypeDef" />
           </li>
         </ul>
       </section>
@@ -49,7 +49,7 @@
             :key="data.name + '_' + namespaceEnumsIndex"
             class="namespace-enumeration-list-item"
           >
-            <enum :data="namespaceEnum" />
+            <enum-section :data="namespaceEnum" />
           </li>
         </ul>
       </section>
@@ -62,8 +62,8 @@ import { computed, toRefs } from 'vue'
 
 import BriefDescription from './BriefDescription.vue'
 import PublicFunction from './PublicFunction.vue'
-import Typedef from './Typedef.vue'
-import Enum from './Enum.vue'
+import TypedefSection from './TypedefSection.vue'
+import EnumSection from './EnumSection.vue'
 
 import { defaultBriefDescription } from '../js/utilities'
 

@@ -3,8 +3,7 @@
 </template>
 
 <script>
-// @ is an alias to /src
-import DoxygenXml from '@/components/DoxygenXml.vue'
+import DoxygenXml from '../components/DoxygenXml.vue'
 
 export default {
   name: 'Home',
