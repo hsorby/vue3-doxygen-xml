@@ -14,12 +14,12 @@ export default defineConfig({
       },
     ],
   },
-  // Enable library mode: only create ES and CJS builds
+  // Enable library mode: only create ES builds
   build: {
     sourcemap: true,
     lib: {
       entry: path.resolve(__dirname, 'src/entry.js'),
-      formats: ['es', 'cjs'],
+      formats: ['es'],
     },
     rollupOptions: {
       // make sure to externalize deps that shouldn't be bundled
@@ -27,7 +27,8 @@ export default defineConfig({
       external: ['vue', 'axios', 'vuex', 'vue-router'],
       output: {
         // Provide global variables to use in the UMD build
-        // for externalized deps
+        // for externalized deps.
+        // I think this is unnecessary as I am only building 'es'.
         globals: {
           axios: 'Axios',
           vue: 'Vue',
