@@ -37,8 +37,10 @@ export default {
   ],
   plugins: [
     // css(),
-    scss(),
-    vue(),
+    // scss(),
+    vue({
+      preprocessStyles: true,
+    }),
     // commonjs(),
     // buble({
     //   transforms: {
