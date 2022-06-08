@@ -5,10 +5,14 @@ import LinkedText from '../components/LinkedText.vue'
 import SimpleTag from '../components/SimpleTag.vue'
 
 import computeroutput from '../components/templates/computeroutput.vue'
+import entry from '../components/templates/entry.vue'
+import mdash from '../components/templates/mdash.vue'
 import parameterlist from '../components/templates/parameterlist.vue'
+import plaintext from '../components/templates/plaintext.vue'
 import simplesect from '../components/templates/simplesect.vue'
 import sp from '../components/templates/sp.vue'
-import plaintext from '../components/templates/plaintext.vue'
+import table from '../components/templates/table.vue'
+
 
 const nodeNameTagNameMap = new Map([
   ['bold', 'strong'],
@@ -23,13 +27,16 @@ const nodeNameTagNameMap = new Map([
   ['parametername', 'code'],
   ['parameternamelist', 'span'],
   ['programlisting', 'code'],
+  ['row', 'tr'],
 ])
 
 const nodeNameComponentMap = new Map([
   ['computeroutput', computeroutput],
+  ['entry', entry],
   ['parameterlist', parameterlist],
-  ['simplesect', simplesect],
   ['ref', LinkedText],
+  ['simplesect', simplesect],
+  ['table', table],
 ])
 
 export function useChildren(element) {
@@ -60,6 +67,11 @@ export function useChildren(element) {
       } else if (node.nodeName === 'sp') {
         childComponent = {
           component: sp,
+          properties: {},
+        }
+      } else if (node.nodeName === 'mdash') {
+        childComponent = {
+          component: mdash,
           properties: {},
         }
       } else {
