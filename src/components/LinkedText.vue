@@ -30,10 +30,9 @@ import { decodeHTML } from '../js/utilities'
 const props = defineProps({
   properties: Object,
   item: Object,
-  link: Object,
 })
 
-const { properties, item, link } = toRefs(props)
+const { properties, item } = toRefs(props)
 const derivedLink = ref({ path: '', hash: '' })
 const derivedItem = ref(null)
 const store = useStore()
@@ -46,10 +45,6 @@ if (properties.value) {
 }
 
 onMounted(() => {
-  if (link.value) {
-    derivedLink.value = link.value
-  }
-
   if (derivedItem.value.reference === null) {
     // C++ library defined types end up here, which we will ignore as they do not have
     // any reference information associated with them.

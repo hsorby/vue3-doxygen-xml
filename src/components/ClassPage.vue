@@ -51,7 +51,7 @@
               }"
               >{{ item.name }}</router-link
             >{{ item.argsString }} :
-            <linked-text :item="item.returnType" :link="item.link" />
+            <linked-text :item="item.returnType" />
           </li>
         </ul>
       </div>
@@ -227,7 +227,6 @@ const simplifiedAllMembersIncludingInherited = computed(() => {
         createSimplifiedMember(
           member.refId,
           memberFunction.name,
-
           memberFunction.argsString,
           memberFunction.returnType,
           memberFunction.id
