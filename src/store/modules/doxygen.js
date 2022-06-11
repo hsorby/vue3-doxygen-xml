@@ -53,20 +53,15 @@ export const actions = {
       return getters.getInflight(page_stem, page_name)
     }
     const pending = DoxygenService.getPage(base_url, page_name)
-      .then(
-        (response) => {
-          const page = parsePage(page_name, response.data)
-          commit('APPEND_PAGE', { routeURL: page_stem, page })
-          commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
-          return page
-        },
-        () => {
-          commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
-        }
-      )
+      .then((response) => {
+        const page = parsePage(page_name, response.data)
+        commit('APPEND_PAGE', { routeURL: page_stem, page })
+        commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
+        return page
+      })
       .catch((error) => {
         commit('REMOVE_INFLIGHT', { routeURL: page_stem, id: page_name })
-        // throw error
+        throw 'Page not found'
       })
     commit('ADD_INFLIGHT', { routeURL: page_stem, page_name, pending })
     return pending

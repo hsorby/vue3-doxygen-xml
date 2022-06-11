@@ -3,9 +3,8 @@
 </template>
 
 <script setup>
-
 import { defineAsyncComponent, ref, shallowRef, toRefs, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 
 import LoadingComponent from './LoadingComponent.vue'
@@ -16,10 +15,15 @@ import { getPageStem } from '../router/modules/doxygen'
 const props = defineProps({
   baseURL: String,
   scrollDelay: Number,
+  pageNotFoundName: {
+    type: String,
+    default: '404',
+  },
 })
 
-const { baseURL, scrollDelay } = toRefs(props)
+const { baseURL, pageNotFoundName, scrollDelay } = toRefs(props)
 const store = useStore()
+const router = useRouter()
 const route = useRoute()
 
 const asyncComponent = shallowRef(null)
@@ -32,7 +36,7 @@ const from = {
 }
 
 function importComponent(templateName) {
-  switch(templateName) {
+  switch (templateName) {
     case 'Index':
       return import('./IndexPage.vue')
     case 'Class':
@@ -67,6 +71,15 @@ function loadPage(pageStem, pageName, templateName) {
                 return importComponent(templateName)
               })
           }
+        })
+        .catch(() => {
+          router.push({
+            name: pageNotFoundName.value,
+            query: {
+              path: route.path,
+            },
+          })
+          return LoadingComponent
         })
     },
     // A component to use while the async component is loading
