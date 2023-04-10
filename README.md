@@ -1,4 +1,4 @@
-![logo](https://github.com/hsorby/vue-doxygen-xml/raw/main/docs/assetts/vue-doxygen-xml-logo.png)
+![logo](https://raw.githubusercontent.com/hsorby/vue3-doxygen-xml/main/docs/assetts/vue-doxygen-xml-logo.png)
 
 # vue3-doxygen-xml
 
@@ -15,22 +15,26 @@ npm install --save vue3-doxygen-xml
 
 ### Module import
 
-vue-doxygen-xml makes use of the vuex store to track data. You must use a vuex store for the component to work.
-**⚠️ You need to install the module with the application like so:**
+Install the module like so:
 
 ```javascript
-import Vue from 'vue'
-import store from './store'
-import DoxygenXml from 'vue3-doxygen-xml'
+import { createApp } from 'vue'
+import App from './App.vue'
 
-Vue.use(DoxygenXml, { store })
+import { installVue3DoxygenXml } from 'vue3-doxygen-xml'
+import 'vue3-doxygen-xml/dist/style.css'
+
+createApp(App)
+  .use(installVue3DoxygenXml)
+  .mount('#app')
 ```
 
 Add the above to your `main.js` application file (this assumes that a standard layout is followed when creating your application).
+Importing the default `style.css` is optional, delete the `import 'vue3-doxygen-xml/dist/style.css'` line from the above code sample to apply your own style.
 
 ### Module component
 
-To use the vue-doxygen-xml component import it in a view and set the `baseURL` for the source XML.
+To use the vue3-doxygen-xml component import it in a view and set the `baseURL` for the source XML.
 Example view `Help.vue`:
 
 ```javascript
@@ -40,21 +44,14 @@ Example view `Help.vue`:
   </div>
 </template>
 
-<script>
+<script setup>
 import { DoxygenXml } from 'vue3-doxygen-xml'
-
-export default {
-  name: 'Help',
-  components: {
-    DoxygenXml
-  }
-}
 </script>
 ```
 
 ### Module routing
 
-vue-doxygen-xml requires that you use vue-router. To add a vue-doxygen-xml route under `help` add the following to `routes` object for vue-router:
+vue3-doxygen-xml requires that you use vue-router. To add a vue3-doxygen-xml route under `help` add the following to `routes` object for vue-router:
 
 ```javascript
   {
@@ -71,8 +68,8 @@ Again assuming standard layout.
 
 ## Examples
 
-For a complete example of a Vue application using vue-doxygen-xml look at https://github.com/hsorby/example-vue3-doxygen-xml.
-The **main** branch has a basic example of how vue-doxygen-xml may be used and the **multi_version** branch has an example of how vue-doxygen-xml may be used for different versions of Doxygen XML output.
+For a complete example of a Vue application using vue3-doxygen-xml look at https://github.com/hsorby/example-vue3-doxygen-xml.
+The **main** branch has a basic example of how vue3-doxygen-xml may be used and the **multi_version** branch has an example of how vue3-doxygen-xml may be used for different versions of Doxygen XML output.
 
 ---
 

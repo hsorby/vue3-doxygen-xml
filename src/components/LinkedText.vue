@@ -20,7 +20,7 @@
 
 <script setup>
 import { computed, onMounted, toRefs, ref } from 'vue'
-import { useStore } from 'vuex'
+import { useDoxygenStore } from '../stores/doxygen'
 import { useRoute } from 'vue-router'
 
 import { getPageStem } from '../router/modules/doxygen'
@@ -35,7 +35,7 @@ const props = defineProps({
 const { properties, item } = toRefs(props)
 const derivedLink = ref({ path: '', hash: '' })
 const derivedItem = ref(null)
-const store = useStore()
+const doxygenStore = useDoxygenStore()
 const route = useRoute()
 
 if (properties.value) {
@@ -51,7 +51,7 @@ onMounted(() => {
     return
   }
   if (derivedItem.value.reference.refKind === 'member') {
-    derivedLink.value.path = store.getters['doxygen/getPageIdForReferenceId'](
+    derivedLink.value.path = doxygenStore.getPageIdForReferenceId(
       pageStem.value,
       derivedItem.value.reference.refId
     )
@@ -77,7 +77,10 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
   // and then replace it after the fact.
   const doubleColonText = '<tmp-double-colon>'
   const encodedDoubleColon = '_1_1'
-  const modifiedReferenceId = referenceId.replace(encodedDoubleColon, doubleColonText)
+  const modifiedReferenceId = referenceId.replace(
+    encodedDoubleColon,
+    doubleColonText
+  )
   const splitModifiedReferenceId = modifiedReferenceId.split('_')
   let splitReferenceId = []
   for (const entry of splitModifiedReferenceId) {
@@ -87,9 +90,9 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
     // We are given a reference id so this won't match a page name which we need.
     // So we will split on '_' and then start to stitch a page name together.
     let potentialPageName = splitReferenceId.splice(0, attempt).join('_')
-    const baseURL = store.getters['doxygen/getBaseUrl'](pageStem.value)
-    store
-      .dispatch('doxygen/fetchPage', {
+    const baseURL = doxygenStore.getBaseUrl(pageStem.value)
+    doxygenStore
+      .fetchPage({
         page_name: potentialPageName,
         page_stem: pageStem.value,
         page_url: baseURL,

@@ -6,7 +6,7 @@ const apiClient = axios.create({
     Accept: 'text/xml',
     'Content-Type': 'text/xml'
   },
-  timeout: 10000
+  timeout: 10013
 })
 
 export default {

@@ -129,7 +129,7 @@
 
 <script setup>
 import { computed, toRefs, ref } from 'vue'
-import { useStore } from 'vuex'
+import { useDoxygenStore } from '../stores/doxygen'
 import { useRoute } from 'vue-router'
 
 import BriefDescription from './BriefDescription.vue'
@@ -151,7 +151,7 @@ const props = defineProps({
 })
 
 const { data } = toRefs(props)
-const store = useStore()
+const doxygenStore = useDoxygenStore()
 const route = useRoute()
 const showAllMembers = ref(false)
 
@@ -159,11 +159,7 @@ function onListAllMembers() {
   showAllMembers.value = !showAllMembers.value
 }
 function getDependees() {
-  return store.getters['doxygen/getDependeePages'](
-    getPageStem(route),
-    data.value.id,
-    true
-  )
+  return doxygenStore.getDependeePages({routeUrl: getPageStem(route), id: data.value.id, recursive: true})
 }
 function createSimplifiedMember(
   refId,
