@@ -1,39 +1,40 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+// Add this to get __dirname support in ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
-  // Make sure we can do @/components/xxx style imports
+  // Updated to modern object syntax for aliases
   resolve: {
-    alias: [
-      {
-        find: '@',
-        replacement: path.resolve(__dirname, 'src'),
-      },
-    ],
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
-  // Enable library mode: only create ES builds
   build: {
     sourcemap: true,
     lib: {
       entry: path.resolve(__dirname, 'src/entry.js'),
-      formats: ['es'],
+      name: 'Vue3DoxygenXml',
+      formats: ['es', 'umd'], // Build both ES and UMD
+      fileName: (format) =>
+        `vue3-doxygen-xml.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      // make sure to externalize deps that shouldn't be bundled
-      // into your library
-      external: ['vue', 'axios', 'vuex', 'vue-router'],
+      // Externalize your peer dependencies (Vue, Vue Router, Pinia)
+      // Axios is a dependency, so it stays bundled.
+      external: ['vue', 'vue-router', 'pinia'],
       output: {
-        // Provide global variables to use in the UMD build
-        // for externalized deps.
-        // I think this is unnecessary as I am only building 'es'.
+        // Provide global variable names for the UMD build
         globals: {
-          axios: 'Axios',
           vue: 'Vue',
-          vuex: 'Vuex',
-          'vue-router': 'vue-router',
+          'vue-router': 'VueRouter',
+          pinia: 'Pinia',
         },
       },
     },
