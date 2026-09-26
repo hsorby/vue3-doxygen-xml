@@ -26,15 +26,14 @@ export default defineConfig({
         `vue3-doxygen-xml.${format === 'es' ? 'mjs' : 'js'}`,
     },
     rollupOptions: {
-      // Externalize your peer dependencies (Vue, Vue Router, Pinia)
+      // Externalize your peer dependencies (Vue, Vue Router)
       // Axios is a dependency, so it stays bundled.
-      external: ['vue', 'vue-router', 'pinia'],
+      external: ['vue', 'vue-router'],
       output: {
         // Provide global variable names for the UMD build
         globals: {
           vue: 'Vue',
           'vue-router': 'VueRouter',
-          pinia: 'Pinia',
         },
       },
     },

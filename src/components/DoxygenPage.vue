@@ -5,7 +5,7 @@
 <script setup>
 import { defineAsyncComponent, ref, shallowRef, toRefs, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDoxygenStore } from '../stores/doxygen'
+import { useDoxygenCache } from '../js/doxygencache'
 
 import LoadingComponent from './LoadingComponent.vue'
 import ErrorComponent from './ErrorComponent.vue'
@@ -22,7 +22,7 @@ const props = defineProps({
 })
 
 const { baseURL, pageNotFoundName, scrollDelay } = toRefs(props)
-const doxygenStore = useDoxygenStore()
+const doxygenCache = useDoxygenCache()
 const router = useRouter()
 const route = useRoute()
 
@@ -50,7 +50,7 @@ function loadPage(pageStem, pageName, templateName) {
     loader: () => {
       pageName = pageName ? pageName : 'index'
       basePageName.value = pageName
-      return doxygenStore
+      return doxygenCache
         .fetchPage({
           page_name: pageName,
           page_stem: pageStem,
@@ -61,7 +61,7 @@ function loadPage(pageStem, pageName, templateName) {
           if (pageName === 'index') {
             return importComponent(templateName)
           } else {
-            return doxygenStore
+            return doxygenCache
               .fetchDependeePages({
                 page_name: pageName,
                 page_stem: pageStem,

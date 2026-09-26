@@ -20,7 +20,7 @@
 
 <script setup>
 import { computed, onMounted, toRefs, ref } from 'vue'
-import { useDoxygenStore } from '../stores/doxygen'
+import { useDoxygenCache } from '../js/doxygencache'
 import { useRoute } from 'vue-router'
 
 import { getPageStem } from '../router/modules/doxygen'
@@ -35,7 +35,7 @@ const props = defineProps({
 const { properties, item } = toRefs(props)
 const derivedLink = ref({ path: '', hash: '' })
 const derivedItem = ref(null)
-const doxygenStore = useDoxygenStore()
+const doxygenCache = useDoxygenCache()
 const route = useRoute()
 
 if (properties.value) {
@@ -51,7 +51,7 @@ onMounted(() => {
     return
   }
   if (derivedItem.value.reference.refKind === 'member') {
-    derivedLink.value.path = doxygenStore.getPageIdForReferenceId(
+    derivedLink.value.path = doxygenCache.getPageIdForReferenceId(
       pageStem.value,
       derivedItem.value.reference.refId
     )
@@ -90,8 +90,8 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
     // We are given a reference id so this won't match a page name which we need.
     // So we will split on '_' and then start to stitch a page name together.
     let potentialPageName = splitReferenceId.splice(0, attempt).join('_')
-    const baseURL = doxygenStore.getBaseUrl(pageStem.value)
-    doxygenStore
+    const baseURL = doxygenCache.getBaseUrl(pageStem.value)
+    doxygenCache
       .fetchPage({
         page_name: potentialPageName,
         page_stem: pageStem.value,

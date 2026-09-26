@@ -1,10 +1,8 @@
-import { createPinia } from 'pinia'
-
 import DoxygenXml from './components/DoxygenXml.vue'
 
 function installVue3DoxygenXml(app, options = {}) {
-  // Create a local pinia instance???
-  app.use(createPinia())
+  // Nothing to install: page data is held in a module-level cache
+  // (see js/doxygencache.js). Kept so existing app.use() calls still work.
 }
 
 export { DoxygenXml, installVue3DoxygenXml }
