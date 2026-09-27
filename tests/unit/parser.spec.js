@@ -9,7 +9,7 @@ import {
   indexXml,
   memberId,
   namespaceXml,
-  structXml,
+  compoundXml,
   variable,
 } from '../helpers/doxygen'
 
@@ -106,6 +106,26 @@ describe('parsePage: namespaces', () => {
 })
 
 describe('parsePage: index', () => {
+  it('lists structs and unions with classes, grouped by namespace', () => {
+    const page = parsePage(
+      'index',
+      indexXml({
+        namespaces: [['namespacens', 'ns']],
+        classes: [['classns_1_1A', 'ns::A']],
+        structs: [['structns_1_1Point', 'ns::Point'], ['structPair', 'Pair']],
+        unions: [['unionU', 'U']],
+      })
+    )
+    expect(page.namespaces[0].classes.map((c) => [c.kind, c.name])).toEqual([
+      ['class', 'ns::A'],
+      ['struct', 'ns::Point'],
+    ])
+    expect(page.classes.map((c) => [c.kind, c.name])).toEqual([
+      ['struct', 'Pair'],
+      ['union', 'U'],
+    ])
+  })
+
   it('lists classes outside any namespace instead of failing (bug 4)', () => {
     const page = parsePage(
       'index',
@@ -130,6 +150,43 @@ describe('parsePage: index', () => {
   })
 })
 
+describe('parsePage: structs and unions', () => {
+  const point = classXml('structPoint', 'Point', {
+    kind: 'struct',
+    sections: {
+      'public-attrib': [
+        variable(memberId('structPoint', 1), 'x', 'double'),
+        variable(memberId('structPoint', 2), 'm', 'double', { args: '[4]' }),
+      ],
+      'public-static-attrib': [variable(memberId('structPoint', 3), 'origin', 'const Point')],
+      'public-func': [func(memberId('structPoint', 4), 'norm', { type: 'double', args: '() const' })],
+    },
+  })
+
+  it('parses a struct like a class, keeping its kind', () => {
+    const page = parsePage('structPoint', point)
+    expect(page).toMatchObject({ id: 'structPoint', kind: 'struct', name: 'Point' })
+    expect(page.publicFunctions.map((f) => f.name)).toEqual(['norm'])
+  })
+
+  it('parses a union', () => {
+    expect(parsePage('unionU', classXml('unionU', 'U', { kind: 'union' }))).toMatchObject({ kind: 'union', name: 'U' })
+  })
+
+  it('reports classes as kind class', () => {
+    expect(parsePage('classX', classXml('classX', 'X')).kind).toBe('class')
+  })
+
+  it('parses public data members', () => {
+    const page = parsePage('structPoint', point)
+    expect(page.publicAttributes.map((a) => [a.kind, a.varType.text, a.name, a.argsString])).toEqual([
+      ['variable', 'double', 'x', ''],
+      ['variable', 'double', 'm', '[4]'],
+    ])
+    expect(page.publicStaticAttributes.map((a) => a.name)).toEqual(['origin'])
+  })
+})
+
 describe('parsePage: errors', () => {
   it('reports malformed XML', () => {
     expect(() => parsePage('classX', '<!doctype html><html><body><p>x</body></html>')).toThrow(/not well-formed XML|no <compounddef/)
@@ -140,6 +197,6 @@ describe('parsePage: errors', () => {
   })
 
   it('reports compound kinds it cannot show as unsupported', () => {
-    expect(() => parsePage('structS', structXml('structS', 'S'))).toThrow(UnsupportedDoxygenContent)
+    expect(() => parsePage('x_8h', compoundXml('x_8h', 'x.h', 'file'))).toThrow(UnsupportedDoxygenContent)
   })
 })

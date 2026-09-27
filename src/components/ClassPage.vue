@@ -1,7 +1,7 @@
 <template>
   <div class="class-container">
     <section :id="data.id">
-      <h1>Class {{ data.name }} reference</h1>
+      <h1>{{ kindLabel }} {{ data.name }} reference</h1>
       <p>
         <brief-description :element="briefDescriptionElement" />
         <router-link
@@ -115,16 +115,48 @@
           </table>
         </section>
       </template>
+      <template v-for="group in attributeGroups" :key="group.section">
+        <section v-if="group.members.length" :id="group.section + '_' + data.id">
+          <h2>{{ group.title }}</h2>
+          <table>
+            <tbody>
+              <tr
+                v-for="attribute in group.members"
+                :key="group.section + '_' + attribute.id"
+              >
+                <td>{{ attribute.varType.text }}</td>
+                <td>
+                  <router-link
+                    :to="{
+                      path: $route.path,
+                      hash: '#' + attribute.id,
+                    }"
+                    >{{ attribute.name }}</router-link
+                  >{{ attribute.argsString }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </template>
       <section :id="'detailed_section_' + data.id">
         <h2>Detailed Description</h2>
         <detailed-description :element="data.detailed" />
       </section>
-      <section :id="'member_function_section_' + data.id">
+      <section v-if="allMemberFunctions.length" :id="'member_function_section_' + data.id">
         <h2>Member Function Documentation</h2>
         <public-function
           v-for="publicFunction in allMemberFunctions"
           :data="publicFunction"
           :key="'public_function_decl_' + publicFunction.id"
+        />
+      </section>
+      <section v-if="allAttributes.length" :id="'member_data_section_' + data.id">
+        <h2>Member Data Documentation</h2>
+        <variable-section
+          v-for="attribute in allAttributes"
+          :data="attribute"
+          :key="'member_data_decl_' + attribute.id"
         />
       </section>
     </section>
@@ -142,6 +174,7 @@ import EnumSection from './EnumSection.vue'
 import LinkedText from './LinkedText.vue'
 import PublicFunction from './PublicFunction.vue'
 import RouterLinkList from './RouterLinkList.vue'
+import VariableSection from './VariableSection.vue'
 
 import { defaultBriefDescription } from '../js/utilities'
 
@@ -205,15 +238,42 @@ const routeName = computed(() => {
 const routeParams = computed(() => {
   return route.params
 })
+const kindLabels = { class: 'Class', struct: 'Struct', union: 'Union' }
+const kindLabel = computed(() => kindLabels[data.value.kind] ?? 'Class')
+
 // Deleted functions (`=delete`) are already left out by the parser.
 const allMemberFunctions = computed(() => {
   return [...data.value.publicFunctions, ...data.value.publicStaticFunctions]
 })
+const attributeGroups = computed(() => [
+  {
+    section: 'public_attributes_section',
+    title: 'Public Attributes',
+    members: data.value.publicAttributes ?? [],
+  },
+  {
+    section: 'public_static_attributes_section',
+    title: 'Public Static Attributes',
+    members: data.value.publicStaticAttributes ?? [],
+  },
+])
+const allAttributes = computed(() =>
+  attributeGroups.value.flatMap((group) => group.members)
+)
+// Functions and data members of a page, for the list of all members.
+function membersOf(page) {
+  return [
+    ...page.publicFunctions,
+    ...page.publicStaticFunctions,
+    ...(page.publicAttributes ?? []),
+    ...(page.publicStaticAttributes ?? []),
+  ]
+}
 const simplifiedAllMembersIncludingInherited = computed(() => {
   let simplifiedMembers = []
   const dependees = getDependees()
   for (const member of data.value.listOfAllMembers) {
-    const foundFunction = allMemberFunctions.value.filter(
+    const foundFunction = membersOf(data.value).filter(
       (fcn) => fcn.id === member.refId
     )
     if (foundFunction.length) {
@@ -223,7 +283,7 @@ const simplifiedAllMembersIncludingInherited = computed(() => {
           member.refId,
           memberFunction.name,
           memberFunction.argsString,
-          memberFunction.returnType,
+          memberFunction.returnType ?? memberFunction.varType,
           memberFunction.id
         )
       )
@@ -231,10 +291,9 @@ const simplifiedAllMembersIncludingInherited = computed(() => {
       let notFound = true
       for (let i = 0; i < dependees.length && notFound; i++) {
         let dependee = dependees[i]
-        const foundFunction = [
-          ...dependee.publicFunctions,
-          ...dependee.publicStaticFunctions,
-        ].filter((fcn) => fcn.id === member.refId)
+        const foundFunction = membersOf(dependee).filter(
+          (fcn) => fcn.id === member.refId
+        )
         if (foundFunction.length) {
           notFound = false
           const memberFunction = foundFunction[0]
@@ -243,7 +302,7 @@ const simplifiedAllMembersIncludingInherited = computed(() => {
               member.refId,
               memberFunction.name,
               memberFunction.argsString,
-              memberFunction.returnType,
+              memberFunction.returnType ?? memberFunction.varType,
               memberFunction.id,
               dependee.id
             )

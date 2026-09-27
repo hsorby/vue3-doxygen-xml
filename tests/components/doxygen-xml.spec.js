@@ -11,7 +11,7 @@ import {
   namespaceXml,
   serve,
   settle,
-  structXml,
+  compoundXml,
   text,
   unmountAll,
   variable,
@@ -57,8 +57,8 @@ describe('loading pages', () => {
 
   it('shows a class whose base class page cannot be loaded (bug 5)', async () => {
     serve({
-      classD: classXml('classD', 'D', { bases: [{ refId: 'structB', name: 'B' }, { refId: 'classGone', name: 'Gone' }] }),
-      structB: structXml('structB', 'B'),
+      classD: classXml('classD', 'D', { bases: [{ refId: 'interfaceB', name: 'B' }, { refId: 'classGone', name: 'Gone' }] }),
+      interfaceB: compoundXml('interfaceB', 'B', 'interface'),
     })
     const { wrapper, router, errors } = await mountAt('/help/classD')
     expect(router.currentRoute.value.path).toBe('/help/classD')
@@ -102,10 +102,11 @@ describe('errors', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
     vi.spyOn(console, 'error').mockImplementation(() => {})
     const getPage = serve({})
-    const { wrapper, errors } = await mountAt('/help/structS')
+    const { wrapper, errors } = await mountAt('/help/x_8h')
     expect(getPage).not.toHaveBeenCalled()
     expect(errors.map((e) => e.kind)).toEqual(['unsupported'])
     expect(text(wrapper)).toContain('not supported yet')
+    expect(errors[0].message).toContain('class, struct, union and namespace')
     expect(wrapper.find('[name]').exists()).toBe(false)
   })
 })
@@ -216,6 +217,90 @@ describe('links', () => {
     const allMembers = wrapper.find('.column-wrapper')
     expect(allMembers.text()).toContain('make')
     expect(allMembers.find('a').attributes('href')).toBe(`/help/classBase#${make}`)
+  })
+})
+
+describe('structs and unions', () => {
+  const x = memberId('structPoint', 1)
+  const m = memberId('structPoint', 2)
+  const origin = memberId('structPoint', 3)
+  const point = classXml('structPoint', 'Point', {
+    kind: 'struct',
+    sections: {
+      'public-attrib': [variable(x, 'x', 'double'), variable(m, 'm', 'double', { args: '[4]' })],
+      'public-static-attrib': [variable(origin, 'origin', 'const Point')],
+    },
+    members: [
+      { refId: x, scope: 'Point', name: 'x' },
+      { refId: m, scope: 'Point', name: 'm' },
+    ],
+  })
+
+  it('shows a struct page with its data members', async () => {
+    serve({ structPoint: point })
+    const { wrapper, errors } = await mountAt('/help/structPoint')
+    expect(errors).toEqual([])
+    expect(heading(wrapper)).toBe('Struct Point reference')
+    const summary = wrapper.find('[id^=public_attributes_section]')
+    expect(summary.find('h2').text()).toBe('Public Attributes')
+    const cells = (section) => section.findAll('tr').map((tr) => tr.findAll('td').map((td) => td.text()))
+    expect(cells(summary)).toEqual([['double', 'x'], ['double', 'm[4]']])
+    expect(summary.findAll('a').map((a) => a.attributes('href'))).toEqual([`/help/structPoint#${x}`, `/help/structPoint#${m}`])
+    expect(cells(wrapper.find('[id^=public_static_attributes_section]'))).toEqual([['const Point', 'origin']])
+    // Each data member has an anchor with its documentation.
+    expect(wrapper.find(`[id="${m}"]`).text()).toContain('double m[4]')
+    expect(wrapper.find(`[id="${origin}"]`).text()).toContain('A variable.')
+  })
+
+  it('lists data members among all members', async () => {
+    serve({ structPoint: point })
+    const { wrapper } = await mountAt('/help/structPoint')
+    expect(wrapper.find('.column-wrapper').text().replace(/\s+/g, ' ')).toContain('m[4] : double')
+  })
+
+  it('shows public data members of classes too', async () => {
+    serve({ classC: classXml('classC', 'C', { sections: { 'public-attrib': [variable(memberId('classC'), 'count')] } }) })
+    const { wrapper } = await mountAt('/help/classC')
+    expect(heading(wrapper)).toBe('Class C reference')
+    expect(wrapper.find('[id^=public_attributes_section] tr').findAll('td').map((td) => td.text())).toEqual(['int', 'count'])
+  })
+
+  it('shows a union page', async () => {
+    serve({ unionU: classXml('unionU', 'U', { kind: 'union' }) })
+    const { wrapper } = await mountAt('/help/unionU')
+    expect(heading(wrapper)).toBe('Union U reference')
+  })
+
+  it('lists data members inherited from a struct base class', async () => {
+    serve({
+      structPoint: point,
+      classD: classXml('classD', 'D', {
+        bases: [{ refId: 'structPoint', name: 'Point' }],
+        members: [{ refId: x, scope: 'Point', name: 'x' }],
+      }),
+    })
+    const { wrapper } = await mountAt('/help/classD')
+    const allMembers = wrapper.find('.column-wrapper')
+    expect(allMembers.text()).toContain('x')
+    expect(allMembers.find('a').attributes('href')).toBe(`/help/structPoint#${x}`)
+    expect(wrapper.find('a[href="/help/structPoint"]').text()).toBe('Point')
+  })
+
+  it('opens a struct from the index and from its namespace page', async () => {
+    serve({
+      index: indexXml({ namespaces: [['namespacens', 'ns']], structs: [['structns_1_1Point', 'ns::Point']] }),
+      namespacens: namespaceXml('namespacens', 'ns', { classes: [['structns_1_1Point', 'ns::Point']] }),
+      structns_1_1Point: classXml('structns_1_1Point', 'ns::Point', { kind: 'struct' }),
+    })
+    const { wrapper, router } = await mountAt('/help')
+    expect(hrefs(wrapper)).toContain('/help/structns_1_1Point')
+    await router.push('/help/namespacens')
+    await loaded(wrapper)
+    await wrapper.find('a[href="/help/structns_1_1Point"]').trigger('click')
+    await settle(10)
+    await loaded(wrapper)
+    expect(router.currentRoute.value.path).toBe('/help/structns_1_1Point')
+    expect(heading(wrapper)).toBe('Struct ns::Point reference')
   })
 })
 

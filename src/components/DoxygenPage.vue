@@ -115,7 +115,7 @@ function loadPage(routePageName) {
 function determineTemplateName(pageName) {
   let templateName = 'Index'
   if (pageName) {
-    if (pageName.startsWith('class')) {
+    if (/^(class|struct|union)/.test(pageName)) {
       templateName = 'Class'
     } else if (pageName.startsWith('namespace')) {
       templateName = 'Namespace'

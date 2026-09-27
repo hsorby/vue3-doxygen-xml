@@ -57,11 +57,11 @@ export function func(id, name, { type = 'void', args = '()', params = [], templa
   )
 }
 
-export function variable(id, name, type = 'int') {
+export function variable(id, name, type = 'int', { args = '' } = {}) {
   return (
     `<memberdef kind="variable" id="${id}" prot="public" static="no">` +
-    `<type>${esc(type)}</type><definition>${esc(type)} ${esc(name)}</definition>` +
-    `<argsstring></argsstring><name>${esc(name)}</name>` +
+    `<type>${esc(type)}</type><definition>${esc(type)} ${esc(name)}${esc(args)}</definition>` +
+    `<argsstring>${esc(args)}</argsstring><name>${esc(name)}</name>` +
     `${descriptions('<para>A variable.</para>')}<location file="x.h" line="1"/></memberdef>`
   )
 }
@@ -75,9 +75,10 @@ const sectiondefs = (sections = {}) =>
     .map(([kind, members]) => `<sectiondef kind="${kind}">${members.join('')}</sectiondef>`)
     .join('')
 
-export function classXml(id, name, { sections = {}, bases = [], members = [], detailed = '' } = {}) {
+// A class, or with `kind` a struct or union (same XML shape).
+export function classXml(id, name, { kind = 'class', sections = {}, bases = [], members = [], detailed = '' } = {}) {
   return (
-    `<?xml version="1.0"?><doxygen><compounddef id="${id}" kind="class" prot="public">` +
+    `<?xml version="1.0"?><doxygen><compounddef id="${id}" kind="${kind}" prot="public">` +
     `<compoundname>${esc(name)}</compoundname>` +
     bases
       .map(
@@ -109,14 +110,23 @@ export function namespaceXml(id, name, { sections = {}, classes = [] } = {}) {
   )
 }
 
-export function structXml(id, name) {
-  return `<?xml version="1.0"?><doxygen><compounddef id="${id}" kind="struct"><compoundname>${esc(name)}</compoundname>${descriptions()}<location file="x.h" line="1"/></compounddef></doxygen>`
+// A minimal compound of any kind, e.g. 'file' or 'interface' pages, which
+// this library does not display.
+export function compoundXml(id, name, kind) {
+  return `<?xml version="1.0"?><doxygen><compounddef id="${id}" kind="${kind}"><compoundname>${esc(name)}</compoundname>${descriptions()}<location file="x.h" line="1"/></compounddef></doxygen>`
 }
 
-export function indexXml({ namespaces = [], classes = [] } = {}) {
+export function indexXml({ namespaces = [], classes = [], structs = [], unions = [] } = {}) {
   const compound = (kind) => ([refId, name]) =>
     `<compound refid="${refId}" kind="${kind}"><name>${esc(name)}</name></compound>`
-  return `<?xml version="1.0"?><doxygenindex>${namespaces.map(compound('namespace')).join('')}${classes.map(compound('class')).join('')}</doxygenindex>`
+  return (
+    '<?xml version="1.0"?><doxygenindex>' +
+    namespaces.map(compound('namespace')).join('') +
+    classes.map(compound('class')).join('') +
+    structs.map(compound('struct')).join('') +
+    unions.map(compound('union')).join('') +
+    '</doxygenindex>'
+  )
 }
 
 // Replace DoxygenService.getPage with a fake server.

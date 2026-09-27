@@ -6,7 +6,7 @@
 //   'network'   - no response: offline, CORS, DNS, timeout (see `code`).
 //   'parse'     - a response arrived but is not Doxygen XML we can read.
 //   'unsupported' - valid Doxygen output this library cannot display yet
-//                 (e.g. a struct or file page). Unknown member kinds inside
+//                 (e.g. a file or group page). Unknown member kinds inside
 //                 a page are skipped instead.
 // The underlying error is kept as `cause`.
 export const DoxygenErrorKind = Object.freeze({
@@ -68,7 +68,7 @@ export function fetchError(error, { pageName, baseURL, url }) {
 export function unsupportedPageError(pageName, baseURL) {
   return new DoxygenPageError(
     DoxygenErrorKind.UNSUPPORTED,
-    `Doxygen page '${pageName}' is not a supported page type (only class and namespace pages are supported)`,
+    `Doxygen page '${pageName}' is not a supported page type (only class, struct, union and namespace pages are supported)`,
     { pageName, baseURL, url: `${(baseURL ?? '').replace(/\/+$/, '')}/${pageName}.xml` }
   )
 }

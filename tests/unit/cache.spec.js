@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { compoundIdForMemberId, useDoxygenCache } from '../../src/js/doxygencache'
 import { DoxygenErrorKind, DoxygenPageError } from '../../src/js/errors'
-import { classXml, memberId, serve, structXml } from '../helpers/doxygen'
+import { classXml, compoundXml, memberId, serve } from '../helpers/doxygen'
 
 const cache = useDoxygenCache()
 
@@ -58,7 +58,7 @@ describe('fetchPage', () => {
 
   it.each([
     ['parse', '<html><body>Not XML'],
-    ['unsupported', structXml('classA', 'A')],
+    ['unsupported', compoundXml('classA', 'A', 'interface')],
   ])('rejects with kind %s for responses it cannot show', async (kind, xml) => {
     serve({ classA: xml })
     const error = await cache.fetchPage({ baseURL: '/xml', pageName: 'classA' }).catch((e) => e)
@@ -107,7 +107,7 @@ describe('base classes', () => {
   })
 
   it.each([
-    ['a struct', { structB: structXml('structB', 'B') }, 'structB'],
+    ['an unsupported kind', { interfaceB: compoundXml('interfaceB', 'B', 'interface') }, 'interfaceB'],
     ['missing', {}, 'classGone'],
   ])('still loads a class whose base class page is %s (bug 5)', async (_, files, baseId) => {
     serve({
@@ -117,6 +117,15 @@ describe('base classes', () => {
     })
     await expect(cache.fetchDependeePages({ baseURL: '/xml', pageName: 'classD' })).resolves.toBeDefined()
     expect(cache.getDependeePages({ baseURL: '/xml', id: 'classD', recursive: true }).map((p) => p.id)).toEqual(['classOk'])
+  })
+
+  it('loads struct base classes', async () => {
+    serve({
+      classD: derived([{ refId: 'structB', name: 'B' }]),
+      structB: classXml('structB', 'B', { kind: 'struct' }),
+    })
+    await cache.fetchDependeePages({ baseURL: '/xml', pageName: 'classD' })
+    expect(cache.getDependeePages({ baseURL: '/xml', id: 'classD', recursive: true }).map((p) => p.id)).toEqual(['structB'])
   })
 
   it('still rejects if the page itself cannot be loaded', async () => {

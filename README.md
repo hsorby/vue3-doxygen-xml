@@ -77,7 +77,7 @@ Its `kind` says what went wrong:
 | `'http'` | The server returned another error status. | `status` |
 | `'network'` | No response (offline, CORS, timeout, ...). | `code` |
 | `'parse'` | A response arrived but is not Doxygen XML that can be read. | |
-| `'unsupported'` | Valid Doxygen output this library cannot display yet, e.g. a struct or file page. (Members it cannot show yet, such as macros, are skipped rather than failing the page.) | |
+| `'unsupported'` | Valid Doxygen output this library cannot display yet, e.g. a file or group page. (Members it cannot show yet, such as macros, are skipped rather than failing the page.) | |
 
 Every error also has `pageName`, `baseURL`, `url` and the original error as `cause`.
 A `'not-found'` error redirects to the route named `404` (as before); other kinds show an error message in place of the page.

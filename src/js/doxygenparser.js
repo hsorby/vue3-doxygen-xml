@@ -21,9 +21,13 @@ function splitNamespace(name) {
   return name.split('::')
 }
 
+// Compound kinds shown with the class page template.
+const classKinds = new Set(['class', 'struct', 'union'])
+
 function parseMainPage(xmlDoc) {
   const root = xmlDoc.documentElement
   const compound = (element) => ({
+    kind: element.getAttribute('kind'),
     name: text(child(element, 'name')),
     refId: element.getAttribute('refid'),
   })
@@ -33,23 +37,25 @@ function parseMainPage(xmlDoc) {
   )
   const namespacesByName = new Map(namespaces.map((n) => [n.name, n]))
 
-  // Classes outside any namespace.
+  // Classes, structs and unions outside any namespace.
   const classes = []
-  children(root, 'compound[kind="class"]').forEach((element) => {
-    const item = compound(element)
-    // 'a::b::C' belongs to namespace 'a::b'; 'a::Outer::Inner' (a nested
-    // class) to 'a'. Try the longest enclosing scope first.
-    const parts = splitNamespace(item.name)
-    let owner = undefined
-    for (let i = parts.length - 1; i > 0 && !owner; i--) {
-      owner = namespacesByName.get(parts.slice(0, i).join('::'))
-    }
-    if (owner) {
-      owner.classes.push(item)
-    } else {
-      classes.push(item)
-    }
-  })
+  children(root, 'compound')
+    .filter((element) => classKinds.has(element.getAttribute('kind')))
+    .forEach((element) => {
+      const item = compound(element)
+      // 'a::b::C' belongs to namespace 'a::b'; 'a::Outer::Inner' (a nested
+      // class) to 'a'. Try the longest enclosing scope first.
+      const parts = splitNamespace(item.name)
+      let owner = undefined
+      for (let i = parts.length - 1; i > 0 && !owner; i--) {
+        owner = namespacesByName.get(parts.slice(0, i).join('::'))
+      }
+      if (owner) {
+        owner.classes.push(item)
+      } else {
+        classes.push(item)
+      }
+    })
 
   const files = children(root, 'compound[kind="file"]').map(compound)
 
@@ -198,6 +204,8 @@ function parseVariable(element) {
     id: element.getAttribute('id'),
     kind: 'variable',
     definition: text(child(element, 'definition')),
+    // e.g. '[4]' for an array
+    argsString: text(child(element, 'argsstring')),
     varType: parseLinkedTextType(child(element, 'type')),
     brief,
     detailed,
@@ -255,6 +263,8 @@ function parseClass(element) {
   const sections = (kind) => children(element, `sectiondef[kind="${kind}"]`)
   return {
     id: element.getAttribute('id'),
+    // 'class', 'struct' or 'union': Doxygen describes all three the same way.
+    kind: element.getAttribute('kind'),
     name: text(child(element, 'compoundname')),
     brief,
     detailed,
@@ -265,6 +275,8 @@ function parseClass(element) {
     publicTypes: parseMembers(sections('public-type')),
     publicFunctions: parseMembers(sections('public-func')),
     publicStaticFunctions: parseMembers(sections('public-static-func')),
+    publicAttributes: parseMembers(sections('public-attrib')),
+    publicStaticAttributes: parseMembers(sections('public-static-attrib')),
   }
 }
 
@@ -289,7 +301,7 @@ export function parsePage(reference, pageText) {
   if (kind === 'namespace') {
     return parseNamespace(compoundDef)
   }
-  if (kind === 'class') {
+  if (classKinds.has(kind)) {
     return parseClass(compoundDef)
   }
   throw new UnsupportedDoxygenContent(
