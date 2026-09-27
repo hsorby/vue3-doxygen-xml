@@ -5,13 +5,25 @@
 //   'http'      - the server answered with another error status (see `status`).
 //   'network'   - no response: offline, CORS, DNS, timeout (see `code`).
 //   'parse'     - a response arrived but is not Doxygen XML we can read.
+//   'unsupported' - valid Doxygen output this library cannot display yet
+//                 (e.g. a struct or file page, or an unknown member kind).
 // The underlying error is kept as `cause`.
 export const DoxygenErrorKind = Object.freeze({
   NOT_FOUND: 'not-found',
   HTTP: 'http',
   NETWORK: 'network',
   PARSE: 'parse',
+  UNSUPPORTED: 'unsupported',
 })
+
+// Thrown by the parser for valid Doxygen content it cannot handle yet;
+// fetchPage turns it into a DoxygenPageError of kind 'unsupported'.
+export class UnsupportedDoxygenContent extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'UnsupportedDoxygenContent'
+  }
+}
 
 export class DoxygenPageError extends Error {
   constructor(kind, message, { pageName, baseURL, url, status, code, cause } = {}) {
@@ -52,8 +64,23 @@ export function fetchError(error, { pageName, baseURL, url }) {
   )
 }
 
+export function unsupportedPageError(pageName, baseURL) {
+  return new DoxygenPageError(
+    DoxygenErrorKind.UNSUPPORTED,
+    `Doxygen page '${pageName}' is not a supported page type (only class and namespace pages are supported)`,
+    { pageName, baseURL, url: `${(baseURL ?? '').replace(/\/+$/, '')}/${pageName}.xml` }
+  )
+}
+
 export function parseError(error, { pageName, baseURL, url }) {
   const reason = error instanceof Error ? error.message : String(error)
+  if (error instanceof UnsupportedDoxygenContent) {
+    return new DoxygenPageError(
+      DoxygenErrorKind.UNSUPPORTED,
+      `Doxygen page '${pageName}' from ${url} contains unsupported content: ${reason}`,
+      { pageName, baseURL, url, cause: error }
+    )
+  }
   return new DoxygenPageError(
     DoxygenErrorKind.PARSE,
     `Could not parse Doxygen page '${pageName}' from ${url}: ${reason}`,

@@ -6,7 +6,7 @@
 import { defineAsyncComponent, provide, ref, shallowRef, toRefs, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
-import { DoxygenErrorKind } from '../js/errors'
+import { DoxygenErrorKind, unsupportedPageError } from '../js/errors'
 
 import LoadingComponent from './LoadingComponent.vue'
 import PageLoadError from './PageLoadError.vue'
@@ -48,16 +48,24 @@ function importComponent(templateName) {
       return import('./NamespacePage.vue')
   }
 }
-function loadPage(pageName, templateName) {
+function loadPage(routePageName) {
   asyncComponent.value = defineAsyncComponent({
     loader: () => {
-      pageName = pageName ? pageName : 'index'
-      basePageName.value = pageName
-      return doxygenCache
-        .fetchPage({
-          baseURL: baseURL.value,
-          pageName,
-        })
+      const pageName = routePageName ? routePageName : 'index'
+      let templateName
+      // Wrapped in a promise so an unsupported page type is handled by the
+      // same .catch() below as fetch and parse failures.
+      return new Promise((resolve) => {
+        templateName = determineTemplateName(routePageName)
+        basePageName.value = pageName
+        resolve()
+      })
+        .then(() =>
+          doxygenCache.fetchPage({
+            baseURL: baseURL.value,
+            pageName,
+          })
+        )
         .then((response) => {
           pageData.value = response
           if (pageName === 'index') {
@@ -102,7 +110,7 @@ function determineTemplateName(pageName) {
     } else if (pageName.startsWith('namespace')) {
       templateName = 'Namespace'
     } else {
-      throw `Have not yet learnt how to deal with ${pageName} files.`
+      throw unsupportedPageError(pageName, baseURL.value)
     }
   }
 
@@ -118,9 +126,7 @@ function scrollTo(hash) {
   }
 }
 function showPage(to) {
-  const pageName = to.params.pageName
-  const templateName = determineTemplateName(pageName)
-  loadPage(pageName, templateName)
+  loadPage(to.params.pageName)
 }
 function handleRouteChange(to) {
   const toHash = to.hash ? to.hash.slice(1) : ''

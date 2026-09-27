@@ -1,3 +1,4 @@
+import { UnsupportedDoxygenContent } from './errors'
 import { decodeHTML } from './utilities'
 
 function splitNamespace(text) {
@@ -249,7 +250,7 @@ function processMemberDef(memberDef) {
   } else if (kind === 'typedef') {
     item = parsePublicTypedef(memberDef)
   } else {
-    throw `Yikes, we have hit an unknown memberDef '${kind}'`
+    throw new UnsupportedDoxygenContent(`unknown member kind '${kind}'`)
   }
 
   return item
@@ -333,8 +334,8 @@ export function parsePage(reference, pageText) {
     } else if (kind === 'class') {
       page = parseClass(compoundDef)
     } else {
-      throw new Error(
-        `don't know what to do with kind '${kind}' for reference '${reference}'`
+      throw new UnsupportedDoxygenContent(
+        `compound kind '${kind}' for reference '${reference}'`
       )
     }
   }

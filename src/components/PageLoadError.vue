@@ -11,6 +11,9 @@ import { DoxygenErrorKind } from '../js/errors'
 
 // Shown by DoxygenPage when a page fails to load for a reason other than
 // not-found (which redirects to the not-found route instead).
+// DoxygenPage passes data/name to every page component; don't render them as attributes.
+defineOptions({ inheritAttrs: false })
+
 const props = defineProps({
   error: [Error, String],
 })
@@ -19,6 +22,8 @@ const headings = {
   [DoxygenErrorKind.HTTP]: 'The documentation server returned an error',
   [DoxygenErrorKind.NETWORK]: 'Could not reach the documentation server',
   [DoxygenErrorKind.PARSE]: 'Could not read this documentation page',
+  [DoxygenErrorKind.UNSUPPORTED]:
+    'This kind of documentation page is not supported yet',
 }
 
 const heading = computed(
