@@ -2,6 +2,7 @@ import { markRaw, shallowReactive } from 'vue'
 
 import DoxygenService from '../services/DoxygenService'
 import { parsePage } from './doxygenparser'
+import { fetchError, parseError } from './errors'
 
 // Injection key used by DoxygenPage to provide its baseURL (a ref) to
 // descendant components, so they can look up pages from the same source.
@@ -89,14 +90,22 @@ function fetchPage({ baseURL, pageName }) {
   if (flights.has(pageName)) {
     return flights.get(pageName)
   }
+  const details = { pageName, baseURL: key, url: `${key}/${pageName}.xml` }
+  // Rejects with a DoxygenPageError (see errors.js) whose `kind` says
+  // whether fetching or parsing failed.
   const pending = DoxygenService.getPage(key, pageName)
+    .catch((error) => {
+      throw fetchError(error, details)
+    })
     .then((response) => {
-      const page = parsePage(pageName, response.data)
+      let page
+      try {
+        page = parsePage(pageName, response.data)
+      } catch (error) {
+        throw parseError(error, details)
+      }
       appendPage(key, page)
       return page
-    })
-    .catch(() => {
-      throw 'Page not found'
     })
     .finally(() => {
       flights.delete(pageName)

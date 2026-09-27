@@ -21,6 +21,7 @@
 <script setup>
 import { computed, inject, onMounted, toRefs, ref } from 'vue'
 import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
+import { DoxygenErrorKind } from '../js/errors'
 
 import { parseLinkedTextType } from '../js/doxygenparser'
 import { decodeHTML } from '../js/utilities'
@@ -96,8 +97,17 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
       .then((response) => {
         derivedLink.value.path = response.id
       })
-      .catch(() => {
-        fetchPageBasedOnReferenceId(referenceId, attempt + 1)
+      .catch((error) => {
+        // A missing file just means this guess was wrong: try a longer name.
+        // Anything else (network, server, parse) won't be fixed by guessing.
+        if (error?.kind === DoxygenErrorKind.NOT_FOUND) {
+          fetchPageBasedOnReferenceId(referenceId, attempt + 1)
+        } else {
+          console.warn(
+            `Could not resolve link for reference '${referenceId}':`,
+            error
+          )
+        }
       })
   } else {
     throw `Could not determine the page that reference '${referenceId}' came from.`

@@ -309,21 +309,33 @@ function parseClass(element) {
 export function parsePage(reference, pageText) {
   let parser = new DOMParser()
   let xmlDoc = parser.parseFromString(pageText, 'text/xml')
+  if (xmlDoc.querySelector('parsererror')) {
+    throw new Error(
+      'response is not well-formed XML (is the server returning an HTML page for missing files?)'
+    )
+  }
   const doxygenIndex = xmlDoc.querySelector('doxygenindex')
   let page = null
   if (doxygenIndex) {
     page = parseMainPage(xmlDoc)
   } else {
     const compoundDef = xmlDoc.querySelector(
-      'compounddef[id="' + reference + '"'
+      'compounddef[id="' + reference + '"]'
     )
+    if (!compoundDef) {
+      throw new Error(
+        `no <compounddef id="${reference}"> element found; is this Doxygen XML output?`
+      )
+    }
     const kind = compoundDef.getAttribute('kind')
     if (kind === 'namespace') {
       page = parseNamespace(compoundDef)
     } else if (kind === 'class') {
       page = parseClass(compoundDef)
     } else {
-      throw `Dont know what to do with kind: '${kind}' with '${reference}' reference`
+      throw new Error(
+        `don't know what to do with kind '${kind}' for reference '${reference}'`
+      )
     }
   }
 

@@ -66,6 +66,38 @@ vue3-doxygen-xml requires that you use vue-router. To add a vue3-doxygen-xml rou
 
 Again assuming standard layout.
 
+### Error handling
+
+When a page fails to load, `<doxygen-xml>` emits an `error` event with a `DoxygenPageError`.
+Its `kind` says what went wrong:
+
+| `kind` | Meaning | Extra fields |
+| --- | --- | --- |
+| `'not-found'` | The server returned 404/410 for the XML file. | `status` |
+| `'http'` | The server returned another error status. | `status` |
+| `'network'` | No response (offline, CORS, timeout, ...). | `code` |
+| `'parse'` | A response arrived but is not Doxygen XML that can be read. | |
+
+Every error also has `pageName`, `baseURL`, `url` and the original error as `cause`.
+A `'not-found'` error redirects to the route named `404` (as before); other kinds show an error message in place of the page.
+
+```javascript
+<template>
+  <doxygen-xml baseURL="/doxygen-xml-files" @error="onError" />
+</template>
+
+<script setup>
+import { DoxygenXml, DoxygenErrorKind } from 'vue3-doxygen-xml'
+
+function onError(error) {
+  if (error.kind === DoxygenErrorKind.NETWORK) {
+    // e.g. show an "offline" banner
+  }
+  console.error(error.message, error.cause)
+}
+</script>
+```
+
 ## Examples
 
 For a complete example of a Vue application using vue3-doxygen-xml look at https://github.com/hsorby/example-vue3-doxygen-xml.

@@ -6,9 +6,10 @@
 import { defineAsyncComponent, provide, ref, shallowRef, toRefs, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
+import { DoxygenErrorKind } from '../js/errors'
 
 import LoadingComponent from './LoadingComponent.vue'
-import ErrorComponent from './ErrorComponent.vue'
+import PageLoadError from './PageLoadError.vue'
 
 const props = defineProps({
   baseURL: String,
@@ -18,6 +19,8 @@ const props = defineProps({
     default: '404',
   },
 })
+
+const emit = defineEmits(['error'])
 
 const { baseURL, pageNotFoundName, scrollDelay } = toRefs(props)
 const doxygenCache = useDoxygenCache()
@@ -71,19 +74,24 @@ function loadPage(pageName, templateName) {
           }
         })
         .catch((error) => {
-          router.push({
-            name: pageNotFoundName.value,
-            query: {
-              path: route.path,
-            },
-          })
-          return LoadingComponent
+          emit('error', error)
+          if (error?.kind === DoxygenErrorKind.NOT_FOUND) {
+            router.push({
+              name: pageNotFoundName.value,
+              query: {
+                path: route.path,
+              },
+            })
+            return LoadingComponent
+          }
+          // Any other failure is shown in place by the errorComponent.
+          throw error
         })
     },
     // A component to use while the async component is loading
     loadingComponent: LoadingComponent,
     // A component to use if the load fails
-    errorComponent: ErrorComponent,
+    errorComponent: PageLoadError,
   })
 }
 function determineTemplateName(pageName) {
