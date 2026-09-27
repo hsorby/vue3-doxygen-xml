@@ -1,15 +1,11 @@
 <template>
-  <dl :id="data.id" class="typedef">
-    <dt class="typedef-name">
-      {{ data.name }}
+  <dl :id="data.id" class="variable">
+    <dt class="variable-definition">
+      <code>{{ data.definition }}</code>
     </dt>
-    <dt>
+    <dd>
       <brief-description :element="briefDescriptionElement" />
-      (<linked-text :item="data.typedefType" :class="'typedef-linked-text'" />)
-    </dt>
-    <dt class="typedef-definition">
-      {{ processedDefinition }}
-    </dt>
+    </dd>
   </dl>
 </template>
 
@@ -18,7 +14,6 @@ import { computed, toRefs } from 'vue'
 import { defaultBriefDescription } from '../js/utilities'
 
 import BriefDescription from './BriefDescription.vue'
-import LinkedText from './LinkedText.vue'
 
 const props = defineProps({
   data: Object,
@@ -26,9 +21,6 @@ const props = defineProps({
 
 const { data } = toRefs(props)
 
-const processedDefinition = computed(() => {
-  return data.value.definition
-})
 const briefDescriptionElement = computed(() => {
   return defaultBriefDescription(data.value.brief)
 })

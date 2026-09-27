@@ -68,22 +68,24 @@
         <section :id="'public_function_section_' + data.id">
           <h2>Public Functions</h2>
           <table>
-            <tr
-              v-for="publicFunction in data.publicFunctions"
-              :key="'public_functions_' + publicFunction.id"
-            >
-              <td>{{ publicFunction.returnType.text }}</td>
-              <td>
-                <router-link
-                  :to="{
-                    path: $route.path,
-                    hash: '#' + publicFunction.id,
-                    // params: $route.params,
-                  }"
-                  >{{ publicFunction.name }}</router-link
-                >{{ publicFunction.argsString }}
-              </td>
-            </tr>
+            <tbody>
+              <tr
+                v-for="publicFunction in data.publicFunctions"
+                :key="'public_functions_' + publicFunction.id"
+              >
+                <td>{{ publicFunction.returnType.text }}</td>
+                <td>
+                  <router-link
+                    :to="{
+                      path: $route.path,
+                      hash: '#' + publicFunction.id,
+                      // params: $route.params,
+                    }"
+                    >{{ publicFunction.name }}</router-link
+                  >{{ publicFunction.argsString }}
+                </td>
+              </tr>
+            </tbody>
           </table>
         </section>
       </template>
@@ -91,23 +93,25 @@
         <section :id="'public_static_functions_section_' + data.id">
           <h2>Public Static Functions</h2>
           <table>
-            <tr
-              v-for="publicStaticFunction in data.publicStaticFunctions"
-              :key="'public_static_functions_' + publicStaticFunction.id"
-            >
-              <td>{{ publicStaticFunction.returnType.text }}</td>
-              <td>
-                <router-link
-                  :to="{
-                    path: $route.path,
-                    hash: '#' + publicStaticFunction.id,
-                    // params: $route.params,
-                  }"
-                >
-                  {{ publicStaticFunction.name }}</router-link
-                >{{ publicStaticFunction.argsString }}
-              </td>
-            </tr>
+            <tbody>
+              <tr
+                v-for="publicStaticFunction in data.publicStaticFunctions"
+                :key="'public_static_functions_' + publicStaticFunction.id"
+              >
+                <td>{{ publicStaticFunction.returnType.text }}</td>
+                <td>
+                  <router-link
+                    :to="{
+                      path: $route.path,
+                      hash: '#' + publicStaticFunction.id,
+                      // params: $route.params,
+                    }"
+                  >
+                    {{ publicStaticFunction.name }}</router-link
+                  >{{ publicStaticFunction.argsString }}
+                </td>
+              </tr>
+            </tbody>
           </table>
         </section>
       </template>
@@ -139,10 +143,7 @@ import LinkedText from './LinkedText.vue'
 import PublicFunction from './PublicFunction.vue'
 import RouterLinkList from './RouterLinkList.vue'
 
-import {
-  removeDeletedFunctions,
-  defaultBriefDescription,
-} from '../js/utilities'
+import { defaultBriefDescription } from '../js/utilities'
 
 const props = defineProps({
   data: Object,
@@ -204,19 +205,13 @@ const routeName = computed(() => {
 const routeParams = computed(() => {
   return route.params
 })
+// Deleted functions (`=delete`) are already left out by the parser.
 const allMemberFunctions = computed(() => {
-  // Remove all references to functions that have argument strings that end in '=delete'
-  removeDeletedFunctions(data.value.publicFunctions)
-
   return [...data.value.publicFunctions, ...data.value.publicStaticFunctions]
 })
 const simplifiedAllMembersIncludingInherited = computed(() => {
   let simplifiedMembers = []
   const dependees = getDependees()
-  for (const dependee of dependees) {
-    // Prune out dependee public functions that we don't want.
-    removeDeletedFunctions(dependee.publicFunctions)
-  }
   for (const member of data.value.listOfAllMembers) {
     const foundFunction = allMemberFunctions.value.filter(
       (fcn) => fcn.id === member.refId
@@ -236,9 +231,10 @@ const simplifiedAllMembersIncludingInherited = computed(() => {
       let notFound = true
       for (let i = 0; i < dependees.length && notFound; i++) {
         let dependee = dependees[i]
-        const foundFunction = dependee.publicFunctions.filter(
-          (fcn) => fcn.id === member.refId
-        )
+        const foundFunction = [
+          ...dependee.publicFunctions,
+          ...dependee.publicStaticFunctions,
+        ].filter((fcn) => fcn.id === member.refId)
         if (foundFunction.length) {
           notFound = false
           const memberFunction = foundFunction[0]

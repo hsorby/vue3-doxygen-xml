@@ -22,7 +22,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 
 import { installVue3DoxygenXml } from 'vue3-doxygen-xml'
-import 'vue3-doxygen-xml/dist/style.css'
+import 'vue3-doxygen-xml/dist/vue3-doxygen-xml.css'
 
 createApp(App)
   .use(installVue3DoxygenXml)
@@ -30,7 +30,7 @@ createApp(App)
 ```
 
 Add the above to your `main.js` application file (this assumes that a standard layout is followed when creating your application).
-Importing the default `style.css` is optional, delete the `import 'vue3-doxygen-xml/dist/style.css'` line from the above code sample to apply your own style.
+Importing the default `vue3-doxygen-xml.css` is optional, delete the `import 'vue3-doxygen-xml/dist/vue3-doxygen-xml.css'` line from the above code sample to apply your own style.
 
 ### Module component
 
@@ -77,7 +77,7 @@ Its `kind` says what went wrong:
 | `'http'` | The server returned another error status. | `status` |
 | `'network'` | No response (offline, CORS, timeout, ...). | `code` |
 | `'parse'` | A response arrived but is not Doxygen XML that can be read. | |
-| `'unsupported'` | Valid Doxygen output this library cannot display yet, e.g. a struct or file page. | |
+| `'unsupported'` | Valid Doxygen output this library cannot display yet, e.g. a struct or file page. (Members it cannot show yet, such as macros, are skipped rather than failing the page.) | |
 
 Every error also has `pageName`, `baseURL`, `url` and the original error as `cause`.
 A `'not-found'` error redirects to the route named `404` (as before); other kinds show an error message in place of the page.
@@ -115,33 +115,21 @@ The **main** branch has a basic example of how vue3-doxygen-xml may be used and 
 ## Development setup
 
 ```
-npm install
+yarn install
 ```
 
-### Compiles and hot-reloads for development
+### Build the library into `dist/`
 
 ```
-npm run serve
+yarn build-package
 ```
 
-### Compiles and minifies for production
+### Run the tests
+
+The tests use [Vitest](https://vitest.dev/) with [jsdom](https://github.com/jsdom/jsdom).
+`tests/unit` covers the XML parser and page cache; `tests/components` mounts `<doxygen-xml>` with a router against a fake server (see `tests/helpers/doxygen.js`).
 
 ```
-npm run build
+yarn test          # run once
+yarn test:watch    # re-run on changes
 ```
-
-### Run your unit tests
-
-```
-npm run test:unit
-```
-
-### Lints and fixes files
-
-```
-npm run lint
-```
-
-### Customize configuration
-
-See [Configuration Reference](https://cli.vuejs.org/config/).

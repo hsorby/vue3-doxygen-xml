@@ -16,6 +16,11 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  test: {
+    environment: 'jsdom',
+    include: ['tests/**/*.spec.js'],
+    restoreMocks: true,
+  },
   build: {
     sourcemap: true,
     lib: {

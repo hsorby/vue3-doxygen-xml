@@ -1,5 +1,5 @@
 <template>
-  <section id="data.id">
+  <section :id="data.id">
     <h1>Namespace {{ data.name }} reference</h1>
     <brief-description :element="briefDescriptionElement" />
     <ul class="namespace-group">
@@ -41,6 +41,18 @@
           </li>
         </ul>
       </section>
+      <section :id="data.id + '_variables'" v-if="haveVariables">
+        <li class="namespace-group-item"><h2>Variables</h2></li>
+        <ul class="namespace-variable-list">
+          <li
+            v-for="namespaceVariable in variables"
+            :key="namespaceVariable.id"
+            class="namespace-variable-list-item"
+          >
+            <variable-section :data="namespaceVariable" />
+          </li>
+        </ul>
+      </section>
       <section :id="data.id + '_enums'" v-if="haveEnums">
         <li class="namespace-group-item"><h2>Enumerations</h2></li>
         <ul class="namespace-enumeration-list">
@@ -64,6 +76,7 @@ import BriefDescription from './BriefDescription.vue'
 import PublicFunction from './PublicFunction.vue'
 import TypedefSection from './TypedefSection.vue'
 import EnumSection from './EnumSection.vue'
+import VariableSection from './VariableSection.vue'
 
 import { defaultBriefDescription } from '../js/utilities'
 
@@ -113,6 +126,12 @@ const haveFunctions = computed(() => {
 })
 const functions = computed(() => {
   return getSection('func')
+})
+const haveVariables = computed(() => {
+  return haveSection('var')
+})
+const variables = computed(() => {
+  return getSection('var')
 })
 const haveEnums = computed(() => {
   return haveSection('enum')

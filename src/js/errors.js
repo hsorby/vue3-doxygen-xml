@@ -6,7 +6,8 @@
 //   'network'   - no response: offline, CORS, DNS, timeout (see `code`).
 //   'parse'     - a response arrived but is not Doxygen XML we can read.
 //   'unsupported' - valid Doxygen output this library cannot display yet
-//                 (e.g. a struct or file page, or an unknown member kind).
+//                 (e.g. a struct or file page). Unknown member kinds inside
+//                 a page are skipped instead.
 // The underlying error is kept as `cause`.
 export const DoxygenErrorKind = Object.freeze({
   NOT_FOUND: 'not-found',

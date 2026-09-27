@@ -1,105 +1,76 @@
 import { UnsupportedDoxygenContent } from './errors'
-import { decodeHTML } from './utilities'
 
-function splitNamespace(text) {
-  return text.split('::')
+// All lookups are scoped to direct children (`:scope > name`) so that, for
+// example, a function's <type> is never taken from its <templateparamlist>.
+// Text is read with textContent: innerHTML would re-escape <, > and & as
+// entities (operator&lt;, Foo&lt; int &gt;).
+
+function child(element, name) {
+  return element ? element.querySelector(`:scope > ${name}`) : null
+}
+
+function children(element, name) {
+  return element ? [...element.querySelectorAll(`:scope > ${name}`)] : []
+}
+
+function text(element) {
+  return element ? element.textContent : ''
+}
+
+function splitNamespace(name) {
+  return name.split('::')
 }
 
 function parseMainPage(xmlDoc) {
-  let namespaceElements = xmlDoc.querySelectorAll('compound[kind="namespace"]')
-  let classElements = xmlDoc.querySelectorAll('compound[kind="class"]')
-  let fileElements = xmlDoc.querySelectorAll('compound[kind="file"]')
-
-  let namespaces = []
-  namespaceElements.forEach(namespaceElement => {
-    namespaces.push({
-      name: namespaceElement.querySelector('name').innerHTML,
-      refId: namespaceElement.getAttribute('refid'),
-      classes: []
-    })
-  })
-  classElements.forEach(classElement => {
-    const splitNames = splitNamespace(
-      classElement.querySelector('name').innerHTML
-    )
-    let candidateNamespace = namespaces.find(
-      namespace => namespace.name === splitNames[0]
-    )
-    candidateNamespace.classes.push({
-      name: classElement.querySelector('name').innerHTML,
-      refId: classElement.getAttribute('refid')
-    })
+  const root = xmlDoc.documentElement
+  const compound = (element) => ({
+    name: text(child(element, 'name')),
+    refId: element.getAttribute('refid'),
   })
 
-  let files = []
-  fileElements.forEach(fileElement => {
-    files.push({
-      name: fileElement.querySelector('name').innerHTML,
-      refId: fileElement.getAttribute('refid')
-    })
+  const namespaces = children(root, 'compound[kind="namespace"]').map(
+    (element) => ({ ...compound(element), classes: [] })
+  )
+  const namespacesByName = new Map(namespaces.map((n) => [n.name, n]))
+
+  // Classes outside any namespace.
+  const classes = []
+  children(root, 'compound[kind="class"]').forEach((element) => {
+    const item = compound(element)
+    // 'a::b::C' belongs to namespace 'a::b'; 'a::Outer::Inner' (a nested
+    // class) to 'a'. Try the longest enclosing scope first.
+    const parts = splitNamespace(item.name)
+    let owner = undefined
+    for (let i = parts.length - 1; i > 0 && !owner; i--) {
+      owner = namespacesByName.get(parts.slice(0, i).join('::'))
+    }
+    if (owner) {
+      owner.classes.push(item)
+    } else {
+      classes.push(item)
+    }
   })
+
+  const files = children(root, 'compound[kind="file"]').map(compound)
 
   return {
     id: 'index',
     namespaces,
-    files
+    classes,
+    files,
   }
 }
 
 function getDescriptions(element) {
-  const brief = element.querySelector(':scope > briefdescription')
-  const detailed = element.querySelector(':scope > detaileddescription')
-
   return {
-    brief,
-    detailed
-  }
-}
-
-function parseMemberDefs(element) {
-  const memberDefElements = element.querySelectorAll('memberdef')
-  let memberDefs = []
-  memberDefElements.forEach(memberDefElement => {
-    memberDefs.push(processMemberDef(memberDefElement))
-  })
-  return memberDefs
-}
-
-function parseNamespace(element) {
-  const id = element.getAttribute('id')
-  const name = element.querySelector('compoundname').innerHTML
-  const classElements = element.querySelectorAll('innerclass')
-  const sectionElements = element.querySelectorAll('sectiondef')
-  const { brief, detailed } = getDescriptions(element)
-  let classes = []
-  classElements.forEach(classElement => {
-    classes.push({
-      name: classElement.innerHTML,
-      refId: classElement.getAttribute('refid')
-    })
-  })
-  let sections = []
-  sectionElements.forEach(sectionElement => {
-    const members = parseMemberDefs(sectionElement)
-    sections.push({
-      members,
-      kind: sectionElement.getAttribute('kind')
-    })
-  })
-
-  return {
-    id,
-    name,
-    brief,
-    detailed,
-    classes,
-    sections
+    brief: child(element, 'briefdescription'),
+    detailed: child(element, 'detaileddescription'),
   }
 }
 
 function parseLocationType(element) {
   return {
-    header: element.getAttribute('file')
+    header: element ? element.getAttribute('file') : '',
   }
 }
 
@@ -107,15 +78,17 @@ function parseRefTextType(element) {
   return {
     refId: element.getAttribute('refid'),
     refKind: element.getAttribute('kindref'),
-    text: element.innerHTML
+    text: element.textContent,
   }
 }
 
 export function parseLinkedTextType(element) {
-  const text = element.textContent
+  if (!element) {
+    return { text: '', linkedText: '', reference: null }
+  }
+  const refElement = element.querySelector('ref')
   let linkedText = ''
   let reference = null
-  const refElement = element.querySelector('ref')
   if (element.hasAttribute('refid')) {
     reference = parseRefTextType(element)
     linkedText = reference.text
@@ -125,80 +98,63 @@ export function parseLinkedTextType(element) {
   }
 
   return {
-    text,
+    text: element.textContent,
     linkedText,
-    reference
+    reference,
   }
 }
 
 function parseCompoundRefs(elements) {
-  let compoundRefs = []
-  elements.forEach(element => {
-    compoundRefs.push({
-      name: element.innerHTML,
-      refId: element.getAttribute('refid'),
-      accessSpecifier: element.getAttribute('prot'),
-      virtual: element.getAttribute('virt') !== 'non-virtual'
-    })
-  })
-  return compoundRefs
+  return elements.map((element) => ({
+    name: element.textContent,
+    refId: element.getAttribute('refid'),
+    accessSpecifier: element.getAttribute('prot'),
+    virtual: element.getAttribute('virt') !== 'non-virtual',
+  }))
 }
 
 function parseListOfAllMembers(element) {
-  let members = []
-  element.querySelectorAll('member[prot="public"]').forEach(element => {
-    members.push({
-      refId: element.getAttribute('refid'),
-      accessSpecifier: element.getAttribute('prot'),
-      scope: element.querySelector('scope').innerHTML,
-      name: element.querySelector('name').innerHTML
-    })
-  })
-
-  return members
+  return children(element, 'member[prot="public"]').map((member) => ({
+    refId: member.getAttribute('refid'),
+    accessSpecifier: member.getAttribute('prot'),
+    scope: text(child(member, 'scope')),
+    name: text(child(member, 'name')),
+  }))
 }
 
 function parseParam(element) {
   return {
-    paramType: parseLinkedTextType(element.querySelector('type')),
-    name: element.querySelector('declname').textContent
+    paramType: parseLinkedTextType(child(element, 'type')),
+    // Unnamed parameters, e.g. `void f(int)`, have no <declname>.
+    name: text(child(element, 'declname')),
   }
 }
 
-function parseParams(elements) {
-  let params = []
-  elements.forEach(element => {
-    params.push(parseParam(element))
-  })
-  return params
+function parseTemplateParam(element) {
+  return {
+    type: text(child(element, 'type')),
+    name: text(child(element, 'declname')),
+  }
 }
 
-function parsePublicFunction(element) {
+function parseFunction(element) {
   const { brief, detailed } = getDescriptions(element)
   return {
+    kind: 'function',
     id: element.getAttribute('id'),
     brief,
     detailed,
-    params: parseParams(element.querySelectorAll('param')),
-    returnType: parseLinkedTextType(element.querySelector('type')),
+    templateParams: children(child(element, 'templateparamlist'), 'param').map(
+      parseTemplateParam
+    ),
+    params: children(element, 'param').map(parseParam),
+    returnType: parseLinkedTextType(child(element, 'type')),
     accessSpecifier: element.getAttribute('prot'),
-    definition: element.querySelector('definition').innerHTML,
-    argsString: decodeHTML(element.querySelector('argsstring').innerHTML),
-    name: element.querySelector('name').innerHTML,
-    location: parseLocationType(element.querySelector('location'))
+    definition: text(child(element, 'definition')),
+    argsString: text(child(element, 'argsstring')),
+    name: text(child(element, 'name')),
+    location: parseLocationType(child(element, 'location')),
   }
-}
-
-function parsePublicFunctions(elements) {
-  let publicFunctions = []
-  elements.forEach(element => {
-    const memberDefs = element.querySelectorAll('memberdef')
-    memberDefs.forEach(memberDef => {
-      publicFunctions.push(processMemberDef(memberDef))
-    })
-  })
-
-  return publicFunctions
 }
 
 function parseEnumValue(element) {
@@ -207,138 +163,136 @@ function parseEnumValue(element) {
     id: element.getAttribute('id'),
     brief,
     detailed,
-    name: element.querySelector('name').innerHTML
+    name: text(child(element, 'name')),
   }
 }
 
-function parsePublicEnum(element) {
-  const { brief, detailed } = getDescriptions(element)
-  let enumValues = []
-  const enumValueElements = element.querySelectorAll('enumvalue')
-  enumValueElements.forEach(enumValue => {
-    enumValues.push(parseEnumValue(enumValue))
-  })
-  return {
-    id: element.getAttribute('id'),
-    kind: element.getAttribute('kind'),
-    brief,
-    detailed,
-    name: element.querySelector('name').innerHTML,
-    enumValues
-  }
-}
-
-function parsePublicTypedef(element) {
+function parseEnum(element) {
   const { brief, detailed } = getDescriptions(element)
   return {
     id: element.getAttribute('id'),
-    definition: element.querySelector('definition').innerHTML,
-    typedefType: parseLinkedTextType(element.querySelector('type')),
+    kind: 'enum',
     brief,
     detailed,
-    name: element.querySelector('name').innerHTML
+    name: text(child(element, 'name')),
+    enumValues: children(element, 'enumvalue').map(parseEnumValue),
   }
 }
 
-function processMemberDef(memberDef) {
-  const kind = memberDef.getAttribute('kind')
-  let item = undefined
-  if (kind === 'enum') {
-    item = parsePublicEnum(memberDef)
-  } else if (kind === 'function') {
-    item = parsePublicFunction(memberDef)
-  } else if (kind === 'typedef') {
-    item = parsePublicTypedef(memberDef)
-  } else {
-    throw new UnsupportedDoxygenContent(`unknown member kind '${kind}'`)
+function parseTypedef(element) {
+  const { brief, detailed } = getDescriptions(element)
+  return {
+    id: element.getAttribute('id'),
+    kind: 'typedef',
+    definition: text(child(element, 'definition')),
+    typedefType: parseLinkedTextType(child(element, 'type')),
+    brief,
+    detailed,
+    name: text(child(element, 'name')),
   }
-
-  return item
 }
 
-function parsePublicTypes(elements) {
-  let publicTypes = []
-  elements.forEach(element => {
-    const memberDefs = element.querySelectorAll('memberdef')
-    memberDefs.forEach(memberDef => {
-      publicTypes.push(processMemberDef(memberDef))
+function parseVariable(element) {
+  const { brief, detailed } = getDescriptions(element)
+  return {
+    id: element.getAttribute('id'),
+    kind: 'variable',
+    definition: text(child(element, 'definition')),
+    varType: parseLinkedTextType(child(element, 'type')),
+    brief,
+    detailed,
+    name: text(child(element, 'name')),
+  }
+}
+
+const memberParsers = {
+  enum: parseEnum,
+  function: parseFunction,
+  typedef: parseTypedef,
+  variable: parseVariable,
+}
+
+function isDeleted(member) {
+  return (
+    member.kind === 'function' &&
+    member.argsString.replace(/\s/g, '').endsWith('=delete')
+  )
+}
+
+// Parse the <memberdef>s of the given <sectiondef>s. Member kinds this library
+// cannot show yet (defines, friends, signals, ...) are skipped rather than
+// failing the whole page, and deleted functions are left out.
+function parseMembers(sectionElements) {
+  return sectionElements
+    .flatMap((section) => children(section, 'memberdef'))
+    .map((memberDef) => {
+      const parser = memberParsers[memberDef.getAttribute('kind')]
+      return parser ? parser(memberDef) : null
     })
-  })
+    .filter((member) => member && !isDeleted(member))
+}
 
-  return publicTypes
+function parseNamespace(element) {
+  const { brief, detailed } = getDescriptions(element)
+  return {
+    id: element.getAttribute('id'),
+    name: text(child(element, 'compoundname')),
+    brief,
+    detailed,
+    classes: children(element, 'innerclass').map((classElement) => ({
+      name: classElement.textContent,
+      refId: classElement.getAttribute('refid'),
+    })),
+    sections: children(element, 'sectiondef').map((section) => ({
+      members: parseMembers([section]),
+      kind: section.getAttribute('kind'),
+    })),
+  }
 }
 
 function parseClass(element) {
-  const id = element.getAttribute('id')
-  const name = element.querySelector('compoundname').innerHTML
-  const baseClasses = parseCompoundRefs(
-    element.querySelectorAll('basecompoundref')
-  )
-  const derivedClasses = parseCompoundRefs(
-    element.querySelectorAll('derivedcompoundref')
-  )
   const { brief, detailed } = getDescriptions(element)
-  const location = parseLocationType(element.querySelector('location'))
-  let listOfAllMembers = parseListOfAllMembers(
-    element.querySelector('listofallmembers')
-  )
-  let publicTypes = parsePublicTypes(
-    element.querySelectorAll('sectiondef[kind="public-type"]')
-  )
-  let publicFunctions = parsePublicFunctions(
-    element.querySelectorAll('sectiondef[kind="public-func"]')
-  )
-  let publicStaticFunctions = parsePublicFunctions(
-    element.querySelectorAll('sectiondef[kind="public-static-func"]')
-  )
-
+  const sections = (kind) => children(element, `sectiondef[kind="${kind}"]`)
   return {
-    id,
-    name,
+    id: element.getAttribute('id'),
+    name: text(child(element, 'compoundname')),
     brief,
     detailed,
-    baseClasses,
-    derivedClasses,
-    location,
-    listOfAllMembers,
-    publicTypes,
-    publicFunctions,
-    publicStaticFunctions
+    baseClasses: parseCompoundRefs(children(element, 'basecompoundref')),
+    derivedClasses: parseCompoundRefs(children(element, 'derivedcompoundref')),
+    location: parseLocationType(child(element, 'location')),
+    listOfAllMembers: parseListOfAllMembers(child(element, 'listofallmembers')),
+    publicTypes: parseMembers(sections('public-type')),
+    publicFunctions: parseMembers(sections('public-func')),
+    publicStaticFunctions: parseMembers(sections('public-static-func')),
   }
 }
 
 export function parsePage(reference, pageText) {
-  let parser = new DOMParser()
-  let xmlDoc = parser.parseFromString(pageText, 'text/xml')
+  const parser = new DOMParser()
+  const xmlDoc = parser.parseFromString(pageText, 'text/xml')
   if (xmlDoc.querySelector('parsererror')) {
     throw new Error(
       'response is not well-formed XML (is the server returning an HTML page for missing files?)'
     )
   }
-  const doxygenIndex = xmlDoc.querySelector('doxygenindex')
-  let page = null
-  if (doxygenIndex) {
-    page = parseMainPage(xmlDoc)
-  } else {
-    const compoundDef = xmlDoc.querySelector(
-      'compounddef[id="' + reference + '"]'
-    )
-    if (!compoundDef) {
-      throw new Error(
-        `no <compounddef id="${reference}"> element found; is this Doxygen XML output?`
-      )
-    }
-    const kind = compoundDef.getAttribute('kind')
-    if (kind === 'namespace') {
-      page = parseNamespace(compoundDef)
-    } else if (kind === 'class') {
-      page = parseClass(compoundDef)
-    } else {
-      throw new UnsupportedDoxygenContent(
-        `compound kind '${kind}' for reference '${reference}'`
-      )
-    }
+  if (xmlDoc.documentElement.nodeName === 'doxygenindex') {
+    return parseMainPage(xmlDoc)
   }
-
-  return page
+  const compoundDef = xmlDoc.querySelector(`compounddef[id="${reference}"]`)
+  if (!compoundDef) {
+    throw new Error(
+      `no <compounddef id="${reference}"> element found; is this Doxygen XML output?`
+    )
+  }
+  const kind = compoundDef.getAttribute('kind')
+  if (kind === 'namespace') {
+    return parseNamespace(compoundDef)
+  }
+  if (kind === 'class') {
+    return parseClass(compoundDef)
+  }
+  throw new UnsupportedDoxygenContent(
+    `compound kind '${kind}' for reference '${reference}'`
+  )
 }

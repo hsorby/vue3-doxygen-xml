@@ -1,6 +1,6 @@
 <template>
   <dl>
-    <dt><strong>Parameters</strong></dt>
+    <dt><strong>{{ heading }}</strong></dt>
     <dd>
       <ul>
         <component
@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { toRefs } from 'vue'
+import { computed, toRefs } from 'vue'
 import { useChildren } from '../../composables/doxygenchildren'
 
 const props = defineProps({
@@ -25,4 +25,14 @@ const props = defineProps({
 const { properties } = toRefs(props)
 
 const { children } = useChildren(properties.value.element)
+
+const headings = {
+  param: 'Parameters',
+  retval: 'Return values',
+  exception: 'Exceptions',
+  templateparam: 'Template Parameters',
+}
+const heading = computed(
+  () => headings[properties.value.element.getAttribute('kind')] ?? 'Parameters'
+)
 </script>

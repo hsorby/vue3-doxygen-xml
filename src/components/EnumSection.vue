@@ -3,18 +3,20 @@
     <h3>enum {{ data.name }}</h3>
     <brief-description :element="briefDescriptionElement" />
     <table>
-      <tr>
-        <th>Constant</th>
-        <th>Description</th>
-      </tr>
-      <tr
-        v-for="(enumValue, index) in data.enumValues"
-        :key="`enum_${data.name}_${index}`"
-        :id="enumValue.id"
-      >
-        <td>{{ enumValue.name }}</td>
-        <td><brief-description :element="enumValue.brief" /></td>
-      </tr>
+      <tbody>
+        <tr>
+          <th>Constant</th>
+          <th>Description</th>
+        </tr>
+        <tr
+          v-for="(enumValue, index) in data.enumValues"
+          :key="`enum_${data.name}_${index}`"
+          :id="enumValue.id"
+        >
+          <td>{{ enumValue.name }}</td>
+          <td><brief-description :element="enumValue.brief" /></td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </template>

@@ -20,11 +20,14 @@
 
 <script setup>
 import { computed, inject, onMounted, toRefs, ref } from 'vue'
-import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
+import {
+  baseURLKey,
+  compoundIdForMemberId,
+  useDoxygenCache,
+} from '../js/doxygencache'
 import { DoxygenErrorKind } from '../js/errors'
 
 import { parseLinkedTextType } from '../js/doxygenparser'
-import { decodeHTML } from '../js/utilities'
 
 const props = defineProps({
   properties: Object,
@@ -49,71 +52,79 @@ onMounted(() => {
     // any reference information associated with them.
     return
   }
-  if (derivedItem.value.reference.refKind === 'member') {
-    derivedLink.value.path = doxygenCache.getPageIdForReferenceId(
-      baseURL.value,
-      derivedItem.value.reference.refId
-    )
-    let hashRef = derivedItem.value.reference.refId
-    if (!hashRef.startsWith('#')) {
-      hashRef = '#' + hashRef
+  const { refId, refKind } = derivedItem.value.reference
+  if (refKind === 'member') {
+    derivedLink.value.hash = refId.startsWith('#') ? refId : '#' + refId
+    const pageId = doxygenCache.getPageIdForReferenceId(baseURL.value, refId)
+    if (pageId !== undefined) {
+      derivedLink.value.path = pageId
+    } else {
+      resolveMemberPage(refId)
     }
-    derivedLink.value.hash = hashRef
-
-    if (derivedLink.value.path === undefined) {
-      derivedLink.value.path = ''
-      fetchPageBasedOnReferenceId(derivedItem.value.reference.refId, 1)
-    }
-  } else if (derivedItem.value.reference.refKind === 'compound') {
-    derivedLink.value.path = derivedItem.value.reference.refId
+  } else if (refKind === 'compound') {
+    derivedLink.value.path = refId
     derivedLink.value.hash = ''
   } else {
-    throw 'Found a doxygen ref that is not being handled! Eeek.'
+    console.warn(`Doxygen reference kind '${refKind}' is not handled:`, refId)
   }
 })
-function fetchPageBasedOnReferenceId(referenceId, attempt) {
-  // We will replace '_1_1' which we will interpret as '::' before we split
-  // and then replace it after the fact.
-  const doubleColonText = '<tmp-double-colon>'
-  const encodedDoubleColon = '_1_1'
-  const modifiedReferenceId = referenceId.replace(
-    encodedDoubleColon,
-    doubleColonText
-  )
-  const splitModifiedReferenceId = modifiedReferenceId.split('_')
-  let splitReferenceId = []
-  for (const entry of splitModifiedReferenceId) {
-    splitReferenceId.push(entry.replace(doubleColonText, encodedDoubleColon))
-  }
-  if (attempt < splitReferenceId.length) {
-    // We are given a reference id so this won't match a page name which we need.
-    // So we will split on '_' and then start to stitch a page name together.
-    let potentialPageName = splitReferenceId.splice(0, attempt).join('_')
-    doxygenCache
-      .fetchPage({
-        baseURL: baseURL.value,
-        pageName: potentialPageName,
-      })
-      .then((response) => {
-        derivedLink.value.path = response.id
-      })
-      .catch((error) => {
-        // A missing file just means this guess was wrong: try a longer name.
-        // Anything else (network, server, parse) won't be fixed by guessing.
-        if (error?.kind === DoxygenErrorKind.NOT_FOUND) {
-          fetchPageBasedOnReferenceId(referenceId, attempt + 1)
-        } else {
-          console.warn(
-            `Could not resolve link for reference '${referenceId}':`,
-            error
-          )
-        }
-      })
-  } else {
-    throw `Could not determine the page that reference '${referenceId}' came from.`
-  }
+
+function warnUnresolved(referenceId, error) {
+  console.warn(`Could not resolve link for reference '${referenceId}':`, error)
 }
 
+// Find (and load) the page a member reference belongs to.
+function resolveMemberPage(referenceId) {
+  const pageId = compoundIdForMemberId(referenceId)
+  if (pageId === undefined) {
+    // Not in Doxygen's usual '<compound id>_1<anchor>' form: guess.
+    guessPageForReferenceId(referenceId, 1)
+    return
+  }
+  doxygenCache
+    .fetchPage({ baseURL: baseURL.value, pageName: pageId })
+    .then((page) => {
+      derivedLink.value.path = page.id
+    })
+    .catch((error) => warnUnresolved(referenceId, error))
+}
+
+// Fallback for unrecognised reference ids: split the id on '_' and try
+// longer and longer prefixes as page names.
+function guessPageForReferenceId(referenceId, attempt) {
+  const parts = referenceId
+    .replace(/_1_1/g, '\u0000')
+    .split('_')
+    .map((part) => part.replace(/\u0000/g, '_1_1'))
+  if (attempt >= parts.length) {
+    warnUnresolved(referenceId, 'no page name matched')
+    return
+  }
+  const potentialPageName = parts.slice(0, attempt).join('_')
+  doxygenCache
+    .fetchPage({
+      baseURL: baseURL.value,
+      pageName: potentialPageName,
+    })
+    .then((response) => {
+      derivedLink.value.path = response.id
+    })
+    .catch((error) => {
+      // A missing file just means this guess was wrong: try a longer name.
+      // Anything else (network, server, parse) won't be fixed by guessing.
+      if (error?.kind === DoxygenErrorKind.NOT_FOUND) {
+        guessPageForReferenceId(referenceId, attempt + 1)
+      } else {
+        warnUnresolved(referenceId, error)
+      }
+    })
+}
+
+// The text before and after the linked part, e.g. 'const ' and ' &' for
+// 'const A &'. Parsed text is plain (not HTML), so no decoding is needed.
+const linkedTextIndex = computed(() =>
+  derivedItem.value.text.indexOf(derivedItem.value.linkedText)
+)
 const decodedText = computed(() => {
   if (derivedItem.value.reference !== null) {
     return derivedItem.value.linkedText
@@ -124,11 +135,13 @@ const decodedText = computed(() => {
   return `${derivedItem.value.text} `
 })
 const preDecodedText = computed(() => {
-  const preText = derivedItem.value.text.split(derivedItem.value.linkedText)[0]
-  return decodeHTML(preText)
+  const index = linkedTextIndex.value
+  return index < 0 ? derivedItem.value.text : derivedItem.value.text.slice(0, index)
 })
 const postDecodedText = computed(() => {
-  const postText = derivedItem.value.text.split(derivedItem.value.linkedText)[1]
-  return decodeHTML(postText)
+  const index = linkedTextIndex.value
+  return index < 0
+    ? ''
+    : derivedItem.value.text.slice(index + derivedItem.value.linkedText.length)
 })
 </script>
