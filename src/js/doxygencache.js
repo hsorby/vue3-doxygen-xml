@@ -3,60 +3,65 @@ import { markRaw, shallowReactive } from 'vue'
 import DoxygenService from '../services/DoxygenService'
 import { parsePage } from './doxygenparser'
 
-// Module-level cache of parsed Doxygen pages, shared by all components.
+// Injection key used by DoxygenPage to provide its baseURL (a ref) to
+// descendant components, so they can look up pages from the same source.
+export const baseURLKey = Symbol('vue3-doxygen-xml:baseURL')
+
+// Module-level cache of parsed Doxygen pages, shared by all components and
+// kept for the lifetime of the page. Pages are grouped by the baseURL they
+// were fetched from, so different Doxygen sources never collide, whatever
+// routes they are displayed under.
 //
 // Only `pages` is reactive: ClassPage reads it inside a computed.
 // It is shallow so that the Map itself is tracked, but the parsed page
 // objects (large, read-only trees) are not deep-proxied.
-const pages = shallowReactive(new Map()) // routeURL -> Page[]
-const urlMap = new Map() // routeURL -> baseURL
-const inflight = new Map() // routeURL -> Map<pageName, Promise<Page>>
+const pages = shallowReactive(new Map()) // baseURL -> Page[]
+const inflight = new Map() // baseURL -> Map<pageName, Promise<Page>>
 
-function getPageById(routeURL, id) {
-  return pages.get(routeURL)?.find((page) => page.id === id)
+// '/xml' and '/xml/' refer to the same source.
+function sourceKey(baseURL) {
+  return (baseURL ?? '').replace(/\/+$/, '')
 }
 
-function getBaseUrl(routeURL) {
-  return urlMap.get(routeURL)
+function getPageById(baseURL, id) {
+  return pages.get(sourceKey(baseURL))?.find((page) => page.id === id)
 }
 
-function findPageForReference(routeURL, reference) {
-  return pages.get(routeURL)?.find((page) => reference.startsWith(page.id))
+function findPageForReference(baseURL, reference) {
+  return pages
+    .get(sourceKey(baseURL))
+    ?.find((page) => reference.startsWith(page.id))
 }
 
-function hasPageForReferenceId(routeURL, reference) {
-  return findPageForReference(routeURL, reference) !== undefined
+function hasPageForReferenceId(baseURL, reference) {
+  return findPageForReference(baseURL, reference) !== undefined
 }
 
-function getPageIdForReferenceId(routeURL, reference) {
-  return findPageForReference(routeURL, reference)?.id
+function getPageIdForReferenceId(baseURL, reference) {
+  return findPageForReference(baseURL, reference)?.id
 }
 
-function registerBaseUrl({ baseURL, routeURL }) {
-  if (!pages.has(routeURL)) {
-    pages.set(routeURL, [])
-    urlMap.set(routeURL, baseURL)
-    inflight.set(routeURL, new Map())
-  }
-}
-
-function appendPage({ routeURL, page }) {
+function appendPage(baseURL, page) {
+  const key = sourceKey(baseURL)
   // Set a new array so the shallowReactive Map triggers its dependants.
-  pages.set(routeURL, [...(pages.get(routeURL) ?? []), markRaw(page)])
+  pages.set(key, [...(pages.get(key) ?? []), markRaw(page)])
 }
 
-function getDependeePages({ routeUrl, id, recursive }) {
-  const originalPage = getPageById(routeUrl, id)
+function getDependeePages({ baseURL, id, recursive }) {
+  const originalPage = getPageById(baseURL, id)
   let dependentPages = []
-  if (Object.prototype.hasOwnProperty.call(originalPage, 'baseClasses')) {
+  if (
+    originalPage &&
+    Object.prototype.hasOwnProperty.call(originalPage, 'baseClasses')
+  ) {
     originalPage.baseClasses.forEach((baseClass) => {
       if (baseClass.refId) {
-        const dependentPage = getPageById(routeUrl, baseClass.refId)
+        const dependentPage = getPageById(baseURL, baseClass.refId)
         if (dependentPage !== undefined) {
           dependentPages.push(dependentPage)
           if (recursive) {
             const dependentDependentPages = getDependeePages({
-              routeUrl,
+              baseURL,
               id: dependentPage.id,
               recursive: true,
             })
@@ -71,36 +76,39 @@ function getDependeePages({ routeUrl, id, recursive }) {
   return dependentPages
 }
 
-function fetchPage({ page_name, page_stem, page_url }) {
-  registerBaseUrl({ baseURL: page_url, routeURL: page_stem })
-  const existingPage = getPageById(page_stem, page_name)
+function fetchPage({ baseURL, pageName }) {
+  const key = sourceKey(baseURL)
+  const existingPage = getPageById(key, pageName)
   if (existingPage) {
     return Promise.resolve(existingPage)
   }
-  const flights = inflight.get(page_stem)
-  if (flights.has(page_name)) {
-    return flights.get(page_name)
+  if (!inflight.has(key)) {
+    inflight.set(key, new Map())
   }
-  const pending = DoxygenService.getPage(page_url, page_name)
+  const flights = inflight.get(key)
+  if (flights.has(pageName)) {
+    return flights.get(pageName)
+  }
+  const pending = DoxygenService.getPage(key, pageName)
     .then((response) => {
-      const page = parsePage(page_name, response.data)
-      appendPage({ routeURL: page_stem, page })
+      const page = parsePage(pageName, response.data)
+      appendPage(key, page)
       return page
     })
     .catch(() => {
       throw 'Page not found'
     })
     .finally(() => {
-      flights.delete(page_name)
+      flights.delete(pageName)
     })
-  flights.set(page_name, pending)
+  flights.set(pageName, pending)
   return pending
 }
 
-async function fetchDependeePages({ page_name, page_stem, page_url }) {
-  let dependentPage = getPageById(page_stem, page_name)
+async function fetchDependeePages({ baseURL, pageName }) {
+  let dependentPage = getPageById(baseURL, pageName)
   if (dependentPage === undefined) {
-    dependentPage = await fetchPage({ page_name, page_stem, page_url })
+    dependentPage = await fetchPage({ baseURL, pageName })
   }
   const pageNames = []
   if (Object.prototype.hasOwnProperty.call(dependentPage, 'baseClasses')) {
@@ -112,11 +120,9 @@ async function fetchDependeePages({ page_name, page_stem, page_url }) {
   }
 
   const promises = []
-  pageNames.forEach((pageName) => {
-    promises.push(fetchPage({ page_name: pageName, page_stem, page_url }))
-    promises.push(
-      fetchDependeePages({ page_name: pageName, page_stem, page_url })
-    )
+  pageNames.forEach((name) => {
+    promises.push(fetchPage({ baseURL, pageName: name }))
+    promises.push(fetchDependeePages({ baseURL, pageName: name }))
   })
 
   return Promise.all(promises)
@@ -124,11 +130,8 @@ async function fetchDependeePages({ page_name, page_stem, page_url }) {
 
 const doxygenCache = {
   getPageById,
-  getBaseUrl,
   hasPageForReferenceId,
   getPageIdForReferenceId,
-  registerBaseUrl,
-  appendPage,
   getDependeePages,
   fetchPage,
   fetchDependeePages,

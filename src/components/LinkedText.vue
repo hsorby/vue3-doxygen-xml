@@ -19,11 +19,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, toRefs, ref } from 'vue'
-import { useDoxygenCache } from '../js/doxygencache'
-import { useRoute } from 'vue-router'
+import { computed, inject, onMounted, toRefs, ref } from 'vue'
+import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
 
-import { getPageStem } from '../router/modules/doxygen'
 import { parseLinkedTextType } from '../js/doxygenparser'
 import { decodeHTML } from '../js/utilities'
 
@@ -36,7 +34,7 @@ const { properties, item } = toRefs(props)
 const derivedLink = ref({ path: '', hash: '' })
 const derivedItem = ref(null)
 const doxygenCache = useDoxygenCache()
-const route = useRoute()
+const baseURL = inject(baseURLKey)
 
 if (properties.value) {
   derivedItem.value = parseLinkedTextType(properties.value.element)
@@ -52,7 +50,7 @@ onMounted(() => {
   }
   if (derivedItem.value.reference.refKind === 'member') {
     derivedLink.value.path = doxygenCache.getPageIdForReferenceId(
-      pageStem.value,
+      baseURL.value,
       derivedItem.value.reference.refId
     )
     let hashRef = derivedItem.value.reference.refId
@@ -90,12 +88,10 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
     // We are given a reference id so this won't match a page name which we need.
     // So we will split on '_' and then start to stitch a page name together.
     let potentialPageName = splitReferenceId.splice(0, attempt).join('_')
-    const baseURL = doxygenCache.getBaseUrl(pageStem.value)
     doxygenCache
       .fetchPage({
-        page_name: potentialPageName,
-        page_stem: pageStem.value,
-        page_url: baseURL,
+        baseURL: baseURL.value,
+        pageName: potentialPageName,
       })
       .then((response) => {
         derivedLink.value.path = response.id
@@ -108,9 +104,6 @@ function fetchPageBasedOnReferenceId(referenceId, attempt) {
   }
 }
 
-const pageStem = computed(() => {
-  return getPageStem(route)
-})
 const decodedText = computed(() => {
   if (derivedItem.value.reference !== null) {
     return derivedItem.value.linkedText

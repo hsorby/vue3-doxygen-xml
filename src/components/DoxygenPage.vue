@@ -3,14 +3,12 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, ref, shallowRef, toRefs, watch } from 'vue'
+import { defineAsyncComponent, provide, ref, shallowRef, toRefs, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDoxygenCache } from '../js/doxygencache'
+import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
 
 import LoadingComponent from './LoadingComponent.vue'
 import ErrorComponent from './ErrorComponent.vue'
-
-import { getPageStem } from '../router/modules/doxygen'
 
 const props = defineProps({
   baseURL: String,
@@ -25,6 +23,8 @@ const { baseURL, pageNotFoundName, scrollDelay } = toRefs(props)
 const doxygenCache = useDoxygenCache()
 const router = useRouter()
 const route = useRoute()
+
+provide(baseURLKey, baseURL)
 
 const asyncComponent = shallowRef(null)
 const basePageName = ref('-undefined-')
@@ -45,16 +45,15 @@ function importComponent(templateName) {
       return import('./NamespacePage.vue')
   }
 }
-function loadPage(pageStem, pageName, templateName) {
+function loadPage(pageName, templateName) {
   asyncComponent.value = defineAsyncComponent({
     loader: () => {
       pageName = pageName ? pageName : 'index'
       basePageName.value = pageName
       return doxygenCache
         .fetchPage({
-          page_name: pageName,
-          page_stem: pageStem,
-          page_url: baseURL.value,
+          baseURL: baseURL.value,
+          pageName,
         })
         .then((response) => {
           pageData.value = response
@@ -63,9 +62,8 @@ function loadPage(pageStem, pageName, templateName) {
           } else {
             return doxygenCache
               .fetchDependeePages({
-                page_name: pageName,
-                page_stem: pageStem,
-                page_url: baseURL.value,
+                baseURL: baseURL.value,
+                pageName,
               })
               .then(() => {
                 return importComponent(templateName)
@@ -111,6 +109,11 @@ function scrollTo(hash) {
     })
   }
 }
+function showPage(to) {
+  const pageName = to.params.pageName
+  const templateName = determineTemplateName(pageName)
+  loadPage(pageName, templateName)
+}
 function handleRouteChange(to) {
   const toHash = to.hash ? to.hash.slice(1) : ''
   const toPath = to.path.replace(to.hash, '')
@@ -134,13 +137,13 @@ watch(
     const current = handleRouteChange(to)
 
     if (!current) {
-      const pageStem = getPageStem(to)
-      let pageName = to.params.pageName
-
-      const templateName = determineTemplateName(pageName)
-      loadPage(pageStem, pageName, templateName)
+      showPage(to)
     }
   },
   { immediate: true }
 )
+// A different source shown under the same route: reload the current page.
+watch(baseURL, () => {
+  showPage(route)
+})
 </script>

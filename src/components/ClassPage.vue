@@ -128,8 +128,8 @@
 </template>
 
 <script setup>
-import { computed, toRefs, ref } from 'vue'
-import { useDoxygenCache } from '../js/doxygencache'
+import { computed, inject, toRefs, ref } from 'vue'
+import { baseURLKey, useDoxygenCache } from '../js/doxygencache'
 import { useRoute } from 'vue-router'
 
 import BriefDescription from './BriefDescription.vue'
@@ -143,7 +143,6 @@ import {
   removeDeletedFunctions,
   defaultBriefDescription,
 } from '../js/utilities'
-import { getPageStem } from '../router/modules/doxygen'
 
 const props = defineProps({
   data: Object,
@@ -152,6 +151,7 @@ const props = defineProps({
 
 const { data } = toRefs(props)
 const doxygenCache = useDoxygenCache()
+const baseURL = inject(baseURLKey)
 const route = useRoute()
 const showAllMembers = ref(false)
 
@@ -159,7 +159,11 @@ function onListAllMembers() {
   showAllMembers.value = !showAllMembers.value
 }
 function getDependees() {
-  return doxygenCache.getDependeePages({routeUrl: getPageStem(route), id: data.value.id, recursive: true})
+  return doxygenCache.getDependeePages({
+    baseURL: baseURL.value,
+    id: data.value.id,
+    recursive: true,
+  })
 }
 function createSimplifiedMember(
   refId,
